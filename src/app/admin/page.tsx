@@ -37,7 +37,7 @@ export default async function AdminDashboard() {
     },
   });
 
-  const monthlyRevenue = monthlyOrders.reduce((acc, order) => acc + Number(order.total), 0);
+  const monthlyRevenue = monthlyOrders.reduce((acc: number, order) => acc + Number(order.total), 0);
   const averageOrderValue = ordersCount > 0
     ? (await prisma.order.aggregate({ _avg: { total: true } }))._avg.total || 0
     : 0;

@@ -1,6 +1,14 @@
 import { prisma } from "@/infrastructure/database/prisma";
 import OrderForm from "./order-form";
 
+type ProductDTO = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: string;
+  imageUrl: string | null;
+};
+
 export const metadata = {
   title: "Fazer Encomenda | Raízes do Sul",
   description: "Faça sua encomenda de massas e doces artesanais",
@@ -8,7 +16,7 @@ export const metadata = {
 
 export const revalidate = 60; // Revalidate at most every 60 seconds
 
-const MOCK_PRODUCTS = [
+const MOCK_PRODUCTS: ProductDTO[] = [
   { id: "1", name: "Bolo de Cenoura", price: "35.00", description: "Com calda de chocolate belga.", imageUrl: null },
   { id: "2", name: "Pão de Campanha", price: "22.00", description: "Fermentação natural 24h.", imageUrl: null },
   { id: "3", name: "Focaccia de Alecrim", price: "18.00", description: "Azeite extravirgem e flor de sal.", imageUrl: null },
@@ -25,7 +33,15 @@ export default async function EncomendaPage() {
     orderBy: { name: "asc" },
   });
 
-  const products = dbProducts.length > 0 ? dbProducts : MOCK_PRODUCTS;
+  const products: ProductDTO[] = dbProducts.length > 0
+    ? dbProducts.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      price: p.price.toString(),
+      imageUrl: p.imageUrl,
+    }))
+    : MOCK_PRODUCTS;
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary/10">
