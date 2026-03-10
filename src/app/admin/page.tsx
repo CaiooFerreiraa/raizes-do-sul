@@ -3,6 +3,8 @@ import { prisma } from "@/infrastructure/database/prisma";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Package, ShoppingBag, BarChart3, Star } from "lucide-react";
+import type { Prisma } from "@prisma/client";
+
 
 interface OrderItemWithProduct {
   id: string;
@@ -37,7 +39,7 @@ export default async function AdminDashboard() {
     },
   });
 
-  const monthlyRevenue = monthlyOrders.reduce<number>((acc, order) => acc + Number(order.total), 0);
+  const monthlyRevenue = monthlyOrders.reduce((acc: number, order: { total: Prisma.Decimal | number | string }) => acc + Number(order.total), 0);
   const averageOrderValue = ordersCount > 0
     ? (await prisma.order.aggregate({ _avg: { total: true } }))._avg.total || 0
     : 0;
@@ -55,7 +57,7 @@ export default async function AdminDashboard() {
       },
     }) as unknown as OrderItemWithProduct[];
 
-    const productAggregates = allOrderItems.reduce<Record<string, TopItem>>((acc, item) => {
+    const productAggregates = allOrderItems.reduce<Record<string, TopItem>>((acc: Record<string, TopItem>, item: OrderItemWithProduct) => {
       // Use related product name or a generic "Produto" if relation/field is missing
       const name = item.product?.name || item.productName || "Produto";
       const key = item.productId || name;
