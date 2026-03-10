@@ -49,3 +49,5 @@ next-env.d.ts
 .vscode/
 .idea/
 Thumbs.db
+
+/src/generated/prisma
