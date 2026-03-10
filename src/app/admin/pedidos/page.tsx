@@ -1,5 +1,28 @@
 import { prisma } from "@/infrastructure/database/prisma";
 import { BackButton } from "@/components/ui/back-button";
+import type { Prisma } from "@prisma/client";
+
+interface OrderItem {
+  id: string;
+  productId: string | null;
+  productName: string | null;
+  quantity: number;
+  price: Prisma.Decimal;
+  product: { id: string; name: string } | null;
+}
+
+interface OrderWithItems {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string | null;
+  notes: string | null;
+  status: string;
+  total: Prisma.Decimal;
+  createdAt: Date;
+  items: OrderItem[];
+}
+
 
 export default async function AdminOrders() {
   const orders = await prisma.order.findMany({
@@ -38,7 +61,7 @@ export default async function AdminOrders() {
             <p className="text-muted-foreground italic text-lg opacity-60">Nenhuma encomenda recebida ainda.</p>
           </div>
         ) : (
-          orders.map((order: any) => (
+          orders.map((order: OrderWithItems) => (
             <div key={order.id} className="border border-border/50 bg-card rounded-[2.5rem] p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
@@ -70,7 +93,7 @@ export default async function AdminOrders() {
               <div className="border-t border-border/50 pt-6">
                 <h3 className="text-sm font-bold text-foreground mb-4 uppercase tracking-widest">Itens do Pedido</h3>
                 <div className="space-y-3">
-                  {order.items.map((item: any) => (
+                  {order.items.map((item: OrderItem) => (
                     <div key={item.id} className="flex justify-between items-center bg-secondary/10 p-4 rounded-2xl">
                       <div className="flex items-center gap-4">
                         <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold text-sm">

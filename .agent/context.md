@@ -108,3 +108,4 @@ Evitar a estética "template de IA". Layout de e-commerce e admin com aspecto or
 [2026-03-09] Prisma Fix - Instalado o pacote `@prisma/client` e rodado o npx prisma generate para resolver erro de tipo do PrismaClient ausente.
 [2026-03-09] Design — Substituição da vibe "Fazenda/Orgânico" por "Massas/Bolos Artesanais".
 [2026-03-09] Feature — Implementação do fluxo completo de Encomendas (Page, Form, Server Action).
+[2026-03-10] TypeScript — Eliminação de todos os `any` implícitos no projeto: criadas interfaces `OrderItemWithProduct`, `TopItem`, `OrderWithItems`, `OrderItem`; convertidos `Decimal` do Prisma para `string` no mapeamento de produtos; asserção `as any` em `createOrder` substituída por tipo explícito do Prisma; `bun tsc --noEmit` passou com zero erros.

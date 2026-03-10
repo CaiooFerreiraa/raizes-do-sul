@@ -41,7 +41,7 @@ export async function createOrder(data: CreateOrderInput) {
           create: await Promise.all(
             data.items.map(async (item) => {
               // Try to find if product exists in DB (not a mock ID)
-              let dbProduct = null;
+              let dbProduct: { id: string } | null = null;
               if (item.productId && item.productId.length > 5) {
                 dbProduct = await prisma.product.findUnique({
                   where: { id: item.productId },
@@ -56,7 +56,7 @@ export async function createOrder(data: CreateOrderInput) {
                 price: item.price,
               };
             })
-          ) as any,
+          ) as Parameters<typeof prisma.orderItem.create>[0]["data"][],
         },
       },
     });

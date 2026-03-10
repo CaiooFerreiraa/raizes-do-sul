@@ -4,6 +4,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Package, ShoppingBag, BarChart3, Star } from "lucide-react";
 
+interface OrderItemWithProduct {
+  id: string;
+  productId: string | null;
+  productName: string | null;
+  quantity: number;
+  price: number | string;
+  product: { name: string } | null;
+}
+
+interface TopItem {
+  name: string;
+  quantity: number;
+}
+
 export default async function AdminDashboard() {
   const productsCount = await prisma.product.count();
   const ordersCount = await prisma.order.count();
@@ -29,7 +43,7 @@ export default async function AdminDashboard() {
     : 0;
 
   // Best selling products - Defensive approach to avoid "Unknown field" errors
-  let topItems: any[] = [];
+  let topItems: TopItem[] = [];
   try {
     const allOrderItems = await prisma.orderItem.findMany({
       include: {
@@ -39,11 +53,11 @@ export default async function AdminDashboard() {
           }
         },
       },
-    });
+    }) as unknown as OrderItemWithProduct[];
 
-    const productAggregates = allOrderItems.reduce((acc: any, item: any) => {
+    const productAggregates = allOrderItems.reduce<Record<string, TopItem>>((acc, item) => {
       // Use related product name or a generic "Produto" if relation/field is missing
-      const name = item.product?.name || (item as any).productName || "Produto";
+      const name = item.product?.name || item.productName || "Produto";
       const key = item.productId || name;
 
       if (!acc[key]) {
@@ -53,8 +67,8 @@ export default async function AdminDashboard() {
       return acc;
     }, {});
 
-    topItems = Object.values(productAggregates)
-      .sort((a: any, b: any) => b.quantity - a.quantity)
+    topItems = (Object.values(productAggregates) as TopItem[])
+      .sort((a: TopItem, b: TopItem) => b.quantity - a.quantity)
       .slice(0, 5);
   } catch (error) {
     console.error("Erro ao carregar ranking de produtos:", error);
@@ -148,7 +162,7 @@ export default async function AdminDashboard() {
             {topItems.length === 0 ? (
               <p className="text-muted-foreground italic">Aguardando as primeiras encomendas...</p>
             ) : (
-              (topItems as any[]).map((item, index) => (
+              topItems.map((item: TopItem, index: number) => (
                 <div key={index} className="flex items-center justify-between p-4 bg-secondary/10 rounded-2xl border border-transparent hover:border-primary/20 transition-all">
                   <div className="flex items-center gap-4">
                     <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">

@@ -7,7 +7,7 @@ import { prisma } from "@/infrastructure/database/prisma";
 interface Product {
   id: string;
   name: string;
-  price: any;
+  price: string | number;
   description: string | null;
   imageUrl: string | null;
 }
@@ -34,7 +34,7 @@ export default async function Home() {
     ? dbProducts.map(p => ({
       id: p.id,
       name: p.name,
-      price: p.price,
+      price: p.price.toString(),
       description: p.description,
       imageUrl: p.imageUrl
     }))

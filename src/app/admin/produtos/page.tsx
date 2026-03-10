@@ -49,7 +49,7 @@ export default async function AdminProducts() {
             </div>
           ) : (
             <div className="space-y-4">
-              {products.map((product: any) => (
+              {products.map((product) => (
                 <div key={product.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border border-border/70 rounded-3xl hover:border-primary/20 hover:bg-secondary/5 transition-all duration-300">
                   <div className="mb-4 sm:mb-0">
                     <h3 className="font-display text-2xl font-semibold text-foreground">{product.name}</h3>
