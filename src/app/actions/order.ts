@@ -24,7 +24,7 @@ export async function createOrder(data: CreateOrderInput) {
       return { success: false, error: "Nenhum produto selecionado." };
     }
 
-    const total = data.items.reduce(
+    const total = data.items.reduce<number>(
       (acc, item) => acc + item.price * item.quantity,
       0
     );

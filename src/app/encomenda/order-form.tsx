@@ -37,7 +37,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
     }
   }, [searchParams, initialProducts]);
 
-  const filteredProducts = initialProducts.filter((p) =>
+  const filteredProducts = initialProducts.filter((p: ProductDTO) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -50,7 +50,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
   const getSubtotal = () => {
     let total = 0;
-    initialProducts.forEach((p) => {
+    initialProducts.forEach((p: ProductDTO) => {
       const q = quantities[p.id] || 0;
       total += parseFloat(p.price) * q;
     });
@@ -104,7 +104,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
     }
   };
 
-  const selectedProducts = initialProducts.filter(p => (quantities[p.id] || 0) > 0);
+  const selectedProducts = initialProducts.filter((p: ProductDTO) => (quantities[p.id] || 0) > 0);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-10 md:space-y-16">
@@ -128,7 +128,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
             </div>
           ) : (
             <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
-              {selectedProducts.map((p) => {
+              {selectedProducts.map((p: ProductDTO) => {
                 const q = quantities[p.id] || 0;
                 return (
                   <div key={p.id} className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-2xl shadow-sm">
@@ -185,7 +185,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
           {(searchTerm || selectedProducts.length === 0) && (
             <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.filter(p => (quantities[p.id] || 0) === 0).map((p) => (
+              {filteredProducts.filter((p: ProductDTO) => (quantities[p.id] || 0) === 0).map((p: ProductDTO) => (
                 <div key={p.id} className="flex flex-col border border-border/50 rounded-xl p-3 bg-card hover:border-primary/30 transition-all group">
                   <div className="flex flex-col mb-2">
                     <h4 className="font-semibold text-sm line-clamp-1">{p.name}</h4>
