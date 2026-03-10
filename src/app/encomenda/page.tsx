@@ -34,7 +34,7 @@ export default async function EncomendaPage() {
   });
 
   const products: ProductDTO[] = dbProducts.length > 0
-    ? dbProducts.map((p) => ({
+    ? dbProducts.map((p: any) => ({
       id: p.id,
       name: p.name,
       description: p.description,

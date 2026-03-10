@@ -25,7 +25,7 @@ export async function createOrder(data: CreateOrderInput) {
     }
 
     const total = data.items.reduce<number>(
-      (acc, item) => acc + item.price * item.quantity,
+      (acc: number, item: any) => acc + item.price * item.quantity,
       0
     );
 
@@ -39,7 +39,7 @@ export async function createOrder(data: CreateOrderInput) {
         status: "PENDING",
         items: {
           create: await Promise.all(
-            data.items.map(async (item) => {
+            data.items.map(async (item: any) => {
               // Try to find if product exists in DB (not a mock ID)
               let dbProduct: { id: string } | null = null;
               if (item.productId && item.productId.length > 5) {

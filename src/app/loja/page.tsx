@@ -32,7 +32,7 @@ export default async function ShopPage() {
   });
 
   const products: Product[] = dbProducts.length > 0
-    ? dbProducts.map(p => ({
+    ? dbProducts.map((p: any) => ({
       id: p.id,
       name: p.name,
       price: p.price.toString(),

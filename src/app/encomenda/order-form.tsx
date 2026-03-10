@@ -29,7 +29,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
   // Handle prepopulation from URL
   useEffect(() => {
     const productId = searchParams.get("productId");
-    if (productId && initialProducts.some(p => p.id === productId)) {
+    if (productId && initialProducts.some((p: ProductDTO) => p.id === productId)) {
       setQuantities(prev => {
         if (prev[productId]) return prev; // Already handled or manually changed
         return { ...prev, [productId]: 1 };
@@ -42,7 +42,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
   );
 
   const handleQuantity = (id: string, delta: number) => {
-    setQuantities((prev) => {
+    setQuantities((prev: { [key: string]: number }) => {
       const next = (prev[id] || 0) + delta;
       return { ...prev, [id]: Math.max(0, next) };
     });
@@ -66,8 +66,8 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
     const notes = formData.get("notes") as string;
 
     const items = initialProducts
-      .filter((p) => (quantities[p.id] || 0) > 0)
-      .map((p) => ({
+      .filter((p: ProductDTO) => (quantities[p.id] || 0) > 0)
+      .map((p: ProductDTO) => ({
         productId: p.id,
         name: p.name, // Send name for mock/catalog support
         quantity: quantities[p.id],
@@ -178,7 +178,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                 placeholder="Procurar no cardápio..."
                 className="pl-10 h-10 rounded-xl bg-secondary/10 border-border/50 focus-visible:ring-primary/20 cursor-text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>

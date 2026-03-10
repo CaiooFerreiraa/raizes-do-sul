@@ -31,7 +31,7 @@ export default async function Home() {
   });
 
   const displayProducts: Product[] = dbProducts.length > 0
-    ? dbProducts.map(p => ({
+    ? dbProducts.map((p: any) => ({
       id: p.id,
       name: p.name,
       price: p.price.toString(),
