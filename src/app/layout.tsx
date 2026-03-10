@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 
 const sans = Inter({
@@ -7,14 +7,22 @@ const sans = Inter({
   subsets: ["latin"],
 });
 
-const display = Playfair_Display({
+const display = DM_Serif_Display({
+  weight: "400",
   variable: "--font-display",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Raízes do Sul | Autêntico & Natural",
-  description: "Painel de produtos e encomendas",
+  title: "Raízes do Sul | Massas & Bolos Artesanais",
+  description: "Tradição e sabor em cada fatia. Encomende massas e doces artesanais preparados com receitas de família.",
+  icons: {
+    icon: [
+      { url: "/logo.webp" },
+      { url: "/favicon.ico", sizes: "any" }
+    ],
+    apple: "/logo.webp",
+  },
 };
 
 export default function RootLayout({

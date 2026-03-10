@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-background p-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/IMG_20260219_233217_505-1.webp')] bg-cover bg-center mix-blend-multiply opacity-5 blur-sm" />
       <div className="w-full max-w-sm border border-border/50 bg-card rounded-[2rem] p-8 sm:p-10 shadow-lg relative z-10 transition-transform">
+        <BackButton />
         <h1 className="font-display text-4xl font-bold text-center mb-10 text-foreground">Admin</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">

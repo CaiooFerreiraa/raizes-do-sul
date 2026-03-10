@@ -1,43 +1,68 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Header } from "@/components/header";
+import { prisma } from "@/infrastructure/database/prisma";
 
-export default function Home() {
+interface Product {
+  id: string;
+  name: string;
+  price: any;
+  description: string | null;
+  imageUrl: string | null;
+}
+
+const MOCK_PRODUCTS: Product[] = [
+  { id: "1", name: "Bolo de Cenoura", price: "35.00", description: "Com calda de chocolate belga.", imageUrl: null },
+  { id: "2", name: "Pão de Campanha", price: "22.00", description: "Fermentação natural 24h.", imageUrl: null },
+  { id: "3", name: "Focaccia de Alecrim", price: "18.00", description: "Azeite extravirgem e flor de sal.", imageUrl: null },
+  { id: "4", name: "Pasta Fresca (500g)", price: "25.00", description: "Feita com ovos caipiras.", imageUrl: null },
+  { id: "5", name: "Bolo de Milho", price: "30.00", description: "Receita tradicional da vovó.", imageUrl: null },
+  { id: "6", name: "Pão de Milho", price: "15.00", description: "Macio e quentinho.", imageUrl: null },
+  { id: "7", name: "Torta de Maçã", price: "45.00", description: "Com canela e crosta crocante.", imageUrl: null },
+  { id: "8", name: "Gnocchi de Batata", price: "28.00", description: "Massa leve e artesanal.", imageUrl: null },
+];
+
+export default async function Home() {
+  const dbProducts = await prisma.product.findMany({
+    take: 10,
+    where: { isAvailable: true },
+    orderBy: { createdAt: "desc" }
+  });
+
+  const displayProducts: Product[] = dbProducts.length > 0
+    ? dbProducts.map(p => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      description: p.description,
+      imageUrl: p.imageUrl
+    }))
+    : MOCK_PRODUCTS;
+
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="px-6 h-20 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
-        <Link className="flex items-center gap-2 group cursor-pointer" href="/">
-          <span className="font-display text-2xl tracking-tight text-primary font-bold group-hover:opacity-80 transition-opacity">Raízes do Sul</span>
-        </Link>
-        <nav className="flex items-center gap-6 sm:gap-8">
-          <Link className="text-sm font-medium hover:text-primary transition-colors cursor-pointer" href="/encomenda">
-            Nossas Massas
-          </Link>
-          <Link className="text-sm font-medium hover:text-primary transition-colors cursor-pointer text-muted-foreground" href="/login">
-            Área Admin
-          </Link>
-        </nav>
-      </header>
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <Header />
       <main className="flex-1">
-        <section className="w-full py-16 md:py-24 lg:py-32 xl:py-40 px-6 bg-secondary/30 relative overflow-hidden flex flex-col items-center justify-center min-h-[500px]">
-          <div className="absolute inset-0 z-0">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-40 px-4 md:px-6 bg-secondary/30 relative overflow-hidden flex flex-col items-center justify-center min-h-[400px] md:min-h-[500px]">
+          <div className="absolute inset-0 z-0 text-center">
             <Image
-              src="/IMG_20260219_233217_505-1.webp"
+              src="/logo.webp"
               alt="Fundo Natural"
               fill
-              className="object-cover opacity-25 mix-blend-multiply"
+              className="object-cover opacity-10 blur-[2px]"
               priority
             />
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-[2px]" />
           </div>
-          <div className="container relative z-10 px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-8 text-center">
-              <div className="space-y-4 max-w-3xl">
-                <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-foreground">
-                  Tradição e sabor em cada fatia
+
+          <div className="container relative z-10 flex items-center justify-center">
+            <div className="flex flex-col items-center space-y-4 md:space-y-8 text-center">
+              <div className="space-y-3 md:space-y-6">
+                <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter font-display max-w-4xl leading-[1.1]">
+                  Sabor que vem das <span className="text-primary italic">Raízes</span>
                 </h1>
-                <p className="mx-auto max-w-[700px] text-foreground md:text-xl font-medium leading-relaxed">
-                  Encomende massas e doces artesanais, preparados com receitas de família. Conecte-se com as raízes do sabor.
+                <p className="mx-auto max-w-[700px] text-muted-foreground text-base sm:text-lg md:text-2xl leading-relaxed px-4 md:px-0">
+                  Massas frescas e bolos artesanais feitos com carinho e tradição gaúcha.
                 </p>
               </div>
               <div className="flex space-x-4">
@@ -46,27 +71,47 @@ export default function Home() {
                     Fazer Encomenda
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" className="h-12 px-8 font-medium cursor-pointer rounded-full bg-background/20 backdrop-blur-sm border-primary/20 hover:bg-primary/5 text-primary">
-                  Saber mais
-                </Button>
+                <Link href="/loja">
+                  <Button variant="outline" size="lg" className="h-12 px-8 font-medium cursor-pointer rounded-full bg-background/20 backdrop-blur-sm border-primary/20 hover:bg-primary/5 text-primary">
+                    Conhecer produtos
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="w-full py-20 md:py-32 bg-background flex flex-col items-center justify-center">
+        <section className="w-full py-12 md:py-32 bg-background flex flex-col items-center justify-center">
           <div className="container px-4 md:px-6">
-            <h2 className="font-display text-3xl font-bold tracking-tight mb-12 text-center text-foreground">Nossos Destaques</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="group flex flex-col cursor-pointer border border-border/50 bg-card rounded-3xl p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                  <div className="aspect-[4/5] bg-secondary/80 rounded-2xl mb-6 overflow-hidden relative">
+            <div className="flex flex-col items-center mb-12">
+              <h2 className="font-display text-2xl md:text-4xl font-bold tracking-tight text-foreground text-center">Nossos Destaques</h2>
+              <div className="h-1 w-20 bg-primary mt-4 rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+              {displayProducts.map((product: Product) => (
+                <div key={product.id} className="group flex flex-col border border-border/50 bg-card rounded-xl md:rounded-2xl p-2 md:p-3 hover:shadow-lg transition-all duration-300">
+                  <div className="aspect-[1/1] rounded-lg md:rounded-xl mb-3 overflow-hidden relative">
+                    {product.imageUrl ? (
+                      <Image src={product.imageUrl} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <Image src="/logo.webp" alt="Logo" fill className="object-cover opacity-20" />
+                    )}
                     <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-500" />
                   </div>
-                  <div className="px-2 pb-2">
-                    <h3 className="font-display text-2xl font-semibold mb-2 group-hover:text-primary transition-colors text-foreground">Bolo Artesanal {item}</h3>
-                    <p className="text-muted-foreground text-sm flex-1 leading-relaxed">Feito diariamente com ingredientes selecionados, receita de família e muito carinho.</p>
-                    <p className="text-primary mt-4 font-bold text-lg">R$ 45,00</p>
+                  <div className="px-1 flex flex-col flex-1">
+                    <h3 className="font-display text-sm md:text-base font-bold text-foreground line-clamp-1 mb-1">{product.name}</h3>
+                    <p className="text-muted-foreground text-[10px] md:text-xs flex-1 leading-tight line-clamp-2 mb-2">
+                      {product.description || "Ingrediente selecionado e receita artesanal."}
+                    </p>
+                    <div className="mt-auto flex flex-col gap-2">
+                      <p className="text-primary font-bold text-xs md:text-sm">R$ {product.price.toString()}</p>
+                      <Link href={`/encomenda?productId=${product.id}`}>
+                        <Button size="sm" className="h-7 md:h-8 w-full rounded-full px-2 text-[9px] md:text-[10px] font-bold cursor-pointer">
+                          Encomendar
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}

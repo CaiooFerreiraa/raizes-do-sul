@@ -15,10 +15,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        // Em um sistema real, aqui o usuário seria consultado do banco e comparado com bcrypt.
-        // Simulando login admin: admin@raizesdosul.com / admin123
-        if (credentials.email === "admin@raizesdosul.com" && credentials.password === "admin123") {
-          return { id: "1", name: "Admin", email: "admin@raizesdosul.com" };
+        if (
+          credentials.email === process.env.ADMIN_EMAIL &&
+          credentials.password === process.env.ADMIN_PASSWORD
+        ) {
+          return { id: "1", name: "Admin", email: process.env.ADMIN_EMAIL as string };
         }
         return null;
       },

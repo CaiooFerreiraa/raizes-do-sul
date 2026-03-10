@@ -4,15 +4,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createProductAction } from "@/actions/product";
 import { DeleteButton } from "./delete-button";
+import { BackButton } from "@/components/ui/back-button";
 
 export default async function AdminProducts() {
   const products = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12">
-      <div>
-        <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground">Produtos</h1>
-        <p className="text-muted-foreground mt-3 text-lg">Catálogo orgânico Raízes do Sul.</p>
+    <div className="max-w-7xl mx-auto space-y-8 md:space-y-12">
+      <div className="flex items-center gap-6">
+        <BackButton />
+        <div className="border-l border-border/50 pl-6 py-2">
+          <h1 className="font-display text-3xl sm:text-5xl font-bold text-foreground">Produtos</h1>
+          <p className="text-muted-foreground mt-1 text-md md:text-lg">Gestão de Massas, Bolos e Delícias Artesanais.</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -29,7 +33,7 @@ export default async function AdminProducts() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="description" className="text-muted-foreground ml-1">Descrição</Label>
-              <Input id="description" name="description" className="bg-secondary/20 rounded-2xl h-12 px-4 shadow-inner" placeholder="Detalhes da safra..." />
+              <Input id="description" name="description" className="bg-secondary/20 rounded-2xl h-12 px-4 shadow-inner" placeholder="Ingredientes ou detalhes do sabor..." />
             </div>
             <Button type="submit" className="w-full h-12 rounded-full cursor-pointer mt-4 font-bold text-md hover:scale-[1.02] transition-transform">
               Adicionar
@@ -45,7 +49,7 @@ export default async function AdminProducts() {
             </div>
           ) : (
             <div className="space-y-4">
-              {products.map(product => (
+              {products.map((product: any) => (
                 <div key={product.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border border-border/70 rounded-3xl hover:border-primary/20 hover:bg-secondary/5 transition-all duration-300">
                   <div className="mb-4 sm:mb-0">
                     <h3 className="font-display text-2xl font-semibold text-foreground">{product.name}</h3>

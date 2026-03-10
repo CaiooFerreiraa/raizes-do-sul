@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 interface OrderItemInput {
   productId: string;
+  name: string; // Add name to handle mock products
   quantity: number;
   price: number;
 }
@@ -37,11 +38,25 @@ export async function createOrder(data: CreateOrderInput) {
         total,
         status: "PENDING",
         items: {
-          create: data.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.price,
-          })),
+          create: await Promise.all(
+            data.items.map(async (item) => {
+              // Try to find if product exists in DB (not a mock ID)
+              let dbProduct = null;
+              if (item.productId && item.productId.length > 5) {
+                dbProduct = await prisma.product.findUnique({
+                  where: { id: item.productId },
+                });
+              }
+
+              // Use unchecked create format to avoid 'product' relation requirement if types lag
+              return {
+                productId: dbProduct ? dbProduct.id : null,
+                productName: item.name,
+                quantity: item.quantity,
+                price: item.price,
+              };
+            })
+          ) as any,
         },
       },
     });
