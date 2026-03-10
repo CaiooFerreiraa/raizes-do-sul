@@ -1,13 +1,12 @@
 import { prisma } from "@/infrastructure/database/prisma";
 import { BackButton } from "@/components/ui/back-button";
-import type { Prisma } from "@prisma/client";
 
 interface OrderItem {
   id: string;
   productId: string | null;
   productName: string | null;
   quantity: number;
-  price: Prisma.Decimal;
+  price: any;
   product: { id: string; name: string } | null;
 }
 
@@ -18,7 +17,7 @@ interface OrderWithItems {
   customerPhone: string | null;
   notes: string | null;
   status: string;
-  total: Prisma.Decimal;
+  total: any;
   createdAt: Date;
   items: OrderItem[];
 }

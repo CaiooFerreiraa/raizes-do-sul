@@ -3,7 +3,6 @@ import { prisma } from "@/infrastructure/database/prisma";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Package, ShoppingBag, BarChart3, Star } from "lucide-react";
-import type { Prisma } from "@prisma/client";
 
 
 interface OrderItemWithProduct {
@@ -39,7 +38,7 @@ export default async function AdminDashboard() {
     },
   });
 
-  const monthlyRevenue = monthlyOrders.reduce((acc: number, order: { total: Prisma.Decimal | number | string }) => acc + Number(order.total), 0);
+  const monthlyRevenue = monthlyOrders.reduce((acc: number, order: { total: any }) => acc + Number(order.total), 0);
   const averageOrderValue = ordersCount > 0
     ? (await prisma.order.aggregate({ _avg: { total: true } }))._avg.total || 0
     : 0;
