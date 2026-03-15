@@ -21,7 +21,7 @@ import {
   ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { updateOrderStatus, updatePaymentStatus, toggleDepositPaid } from "@/app/actions/admin-orders";
+import { updateOrderStatus, updatePaymentStatus, toggleDepositPaid } from "@/actions/admin-orders";
 import { toast } from "sonner";
 import {
   DropdownMenu,

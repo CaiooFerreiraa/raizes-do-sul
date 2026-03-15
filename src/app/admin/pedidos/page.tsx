@@ -14,6 +14,9 @@ export default async function AdminOrders() {
     orderBy: { createdAt: "desc" },
   });
 
+  // Serialize for Client Component
+  const serializedOrders = JSON.parse(JSON.stringify(orders));
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 md:space-y-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-border/10">
@@ -35,7 +38,7 @@ export default async function AdminOrders() {
         </div>
       </div>
 
-      <AdminOrdersClient initialOrders={orders as any} />
+      <AdminOrdersClient initialOrders={serializedOrders} />
     </div>
   );
 }

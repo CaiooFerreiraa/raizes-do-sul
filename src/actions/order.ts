@@ -89,3 +89,42 @@ export async function createOrder(data: CreateOrderInput) {
     return { success: false, error: "Erro interno ao processar a encomenda. Tente novamente." };
   }
 }
+
+export async function findOrdersByContact(contact: string) {
+  try {
+    if (!contact || contact.trim() === "") {
+      return { success: false, error: "Informe um e-mail ou WhatsApp válido." };
+    }
+
+    const cleanContact = contact.trim();
+    const orders = await prisma.order.findMany({
+      where: {
+        OR: [
+          { id: cleanContact },
+          { customerEmail: { equals: cleanContact, mode: 'insensitive' } },
+          { customerPhone: { contains: cleanContact } }
+        ]
+      },
+      include: {
+        items: true
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    });
+
+    if (orders.length === 0) {
+      return { success: false, error: "Nenhum pedido encontrado com esse dado." };
+    }
+
+    // Serialize to plain object for Client Components
+    const serializedOrders = JSON.parse(JSON.stringify(orders));
+
+    return { 
+      success: true, 
+      orders: serializedOrders 
+    };
+  } catch (error) {
+    console.error("Erro ao buscar encomendas:", error);
+    return { success: false, error: "Erro interno. Tente novamente." };
+  }
+}

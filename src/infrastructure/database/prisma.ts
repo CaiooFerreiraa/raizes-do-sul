@@ -15,11 +15,11 @@ declare global {
 }
 
 export const prisma =
-  global.prisma ||
+  (globalThis as any).prisma ||
   new PrismaClient({
     adapter,
   });
 
 if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma;
+  (globalThis as any).prisma = prisma;
 }

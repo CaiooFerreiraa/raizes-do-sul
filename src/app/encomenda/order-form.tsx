@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { createOrder } from "../actions/order";
+import { createOrder } from "@/actions/order";
+import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Sheet, 
@@ -58,6 +59,7 @@ type Step = "selection" | "checkout" | "success";
 
 function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }) {
   const [step, setStep] = useState<Step>("selection");
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -76,17 +78,55 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
     scheduledDate: new Date().toISOString().split('T')[0],
     scheduledTime: ""
   });
+  const [whatsappUrl, setWhatsappUrl] = useState<string>("");
+
   
+  const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    if (session?.user) {
+      setOrderDetails(prev => ({
+        ...prev,
+        customerName: session.user.name || "",
+        customerEmail: session.user.email || "",
+        customerPhone: session.user.phone || "",
+        street: session.user.street || "",
+        number: session.user.number || "",
+        neighborhood: session.user.neighborhood || "",
+        reference: session.user.reference || "",
+      }));
+    }
+  }, [session]);
+
+  useEffect(() => {
     const productId = searchParams.get("productId");
+    const reorderData = searchParams.get("reorder");
+
     if (productId && initialProducts.some((p: ProductDTO) => p.id === productId)) {
       setQuantities(prev => {
         if (prev[productId]) return prev;
         return { ...prev, [productId]: 1 };
       });
+    }
+
+    if (reorderData) {
+      try {
+        const decoded = JSON.parse(atob(reorderData));
+        if (Array.isArray(decoded)) {
+          const newQuantities: { [key: string]: number } = {};
+          decoded.forEach((item: any) => {
+            if (item.productId && initialProducts.some(p => p.id === item.productId)) {
+              newQuantities[item.productId] = item.quantity;
+            }
+          });
+          setQuantities(prev => ({ ...prev, ...newQuantities }));
+          toast.success("Itens carregados para reencomenda!");
+        }
+      } catch (e) {
+        console.error("Erro ao processar reencomenda:", e);
+      }
     }
   }, [searchParams, initialProducts]);
 
@@ -161,9 +201,36 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
     setLoading(false);
 
     if (res.success) {
+      const orderId = res.orderId as string;
+      setCreatedOrderId(orderId);
+      
+      // WhatsApp Resume
+      const friendlyPayment = {
+        'PIX': 'Pix',
+        'DEBIT': 'Cartão de Débito',
+        'CREDIT': 'Cartão de Crédito',
+        'CASH': 'Dinheiro'
+      }[paymentMethod] || paymentMethod;
+
+      const friendlyDelivery = deliveryType === 'PICKUP' 
+        ? `Vou retirar na ${pickupPoint === 'LOJA' ? 'loja' : 'feira'}`
+        : `Entrega em: ${orderDetails.street}, ${orderDetails.number} (${orderDetails.neighborhood})`;
+
+      const message = `Olá, tudo bem? 👋\n\nFiz uma nova encomenda pelo site da *Raízes do Sul* e estou enviando o resumo aqui pra vocês!\n\n*MEU PEDIDO (#${orderId.slice(-6).toUpperCase()})*\n\n*O que eu escolhi:*\n${items.map(i => `• ${i.quantity}x ${i.name} — R$ ${(i.price * i.quantity).toFixed(2).replace('.', ',')}`).join('\n')}\n\n*💰 Total:* R$ ${getSubtotal().toFixed(2).replace('.', ',')}\n*💳 Pagamento:* ${friendlyPayment}\n*📍 Entrega/Retirada:* ${friendlyDelivery}\n\n${orderDetails.notes ? `*📝 Observação:* ${orderDetails.notes}\n\n` : ''}Fico no aguardo da confirmação de vocês para enviar o sinal de 50%. Obrigado! ✨`;
+      
+      const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
+      const cleanedNumber = rawNumber.replace(/\D/g, "");
+      const url = `https://wa.me/${cleanedNumber}?text=${encodeURIComponent(message)}`;
+      setWhatsappUrl(url);
+
       setStep("success");
       setQuantities({});
       window.scrollTo({ top: 0, behavior: "smooth" });
+      
+      // Auto redirect after delay
+      setTimeout(() => {
+        window.open(url, '_blank');
+      }, 2000);
     } else {
       toast.error(res.error || "Ocorreu um erro ao enviar.");
     }
@@ -222,17 +289,34 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
         <div className="pt-4 flex flex-col sm:flex-row gap-4 w-full justify-center">
           <Button 
-            onClick={() => router.push("/")} 
+            onClick={() => router.push(`/acompanhar/${createdOrderId}`)} 
             className="rounded-full px-12 h-14 text-[10px] font-bold uppercase tracking-widest bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
           >
-            Voltar ao Início
+            Acompanhar Pedido
           </Button>
           <Button 
-            onClick={() => window.open('https://wa.me/5553999999999', '_blank')} 
+            onClick={() => {
+              if (whatsappUrl) {
+                window.open(whatsappUrl, '_blank');
+              } else {
+                const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
+                const cleanedNumber = rawNumber.replace(/\D/g, "");
+                window.open(`https://wa.me/${cleanedNumber}`, '_blank');
+              }
+            }} 
             variant="outline"
             className="rounded-full px-10 h-14 text-[10px] font-bold uppercase tracking-widest border-border/40 text-muted-foreground hover:bg-card/40 transition-all cursor-pointer"
           >
             Chamar no Whats
+          </Button>
+        </div>
+        <div className="pt-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push("/")}
+            className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+          >
+            Voltar ao Início
           </Button>
         </div>
       </motion.div>
@@ -561,6 +645,19 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                           <span className={`text-[10px] font-bold uppercase tracking-widest ${deliveryType === "DELIVERY" ? 'text-primary' : 'text-muted-foreground/60'}`}>Delivery</span>
                         </Label>
                       </RadioGroup>
+                      
+                      {deliveryType === "DELIVERY" && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-primary/5 p-4 rounded-xl border border-primary/10 mt-2"
+                        >
+                          <p className="text-[10px] text-primary font-bold leading-relaxed">
+                            <AlertCircle size={10} className="inline mr-1" />
+                            Lembre-se: Para entregas, poderá haver acréscimo de frete. O valor será informado na confirmação.
+                          </p>
+                        </motion.div>
+                      )}
 
                       <AnimatePresence mode="wait">
                         {deliveryType === "PICKUP" && (
@@ -685,20 +782,52 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                       <ShoppingBag size={14} className="text-primary/60" />
                       Seus Dados
                     </h4>
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="customerName" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">Nome Completo</Label>
-                        <Input id="customerName" name="customerName" value={orderDetails.customerName} onChange={handleInputChange} placeholder="Como deseja ser chamado?" required className="h-12 rounded-2xl bg-card/10 border-border/60 px-6 text-sm font-medium focus:ring-primary/5 transition-all w-full cursor-text" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="customerPhone" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">WhatsApp</Label>
-                        <Input id="customerPhone" name="customerPhone" type="tel" value={orderDetails.customerPhone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-12 rounded-2xl bg-card/10 border-border/60 px-6 text-sm font-medium focus:ring-primary/5 transition-all w-full cursor-text" />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="customerEmail" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">E-mail</Label>
-                        <Input id="customerEmail" name="customerEmail" type="email" value={orderDetails.customerEmail} onChange={handleInputChange} placeholder="exemplo@gmail.com" required className="h-12 rounded-2xl bg-card/10 border-border/60 px-6 text-sm font-medium focus:ring-primary/5 transition-all w-full cursor-text" />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
+                    <div className="space-y-6">
+                      {session?.user && (
+                        <div className="bg-primary/[0.03] p-5 rounded-[2rem] border border-primary/10 flex items-center justify-between animate-in fade-in duration-500">
+                          <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-display font-bold text-sm">
+                              {orderDetails.customerName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                            </div>
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-bold text-foreground leading-none">{orderDetails.customerName}</p>
+                              <p className="text-[10px] text-muted-foreground font-medium">{orderDetails.customerEmail} • {orderDetails.customerPhone || 'WhatsApp não cadastrado'}</p>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <CheckCircle2 size={10} className="text-primary" />
+                                <span className="text-[9px] font-bold text-primary uppercase tracking-[0.1em]">Dados Carregados</span>
+                              </div>
+                            </div>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            type="button"
+                            onClick={() => router.push('/perfil')}
+                            className="text-[9px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary/5 h-8 px-3 rounded-full"
+                          >
+                            Editar
+                          </Button>
+                        </div>
+                      )}
+
+                      {!session?.user && (
+                        <div className="grid gap-6 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="customerName" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">Nome Completo</Label>
+                            <Input id="customerName" name="customerName" value={orderDetails.customerName} onChange={handleInputChange} placeholder="Como deseja ser chamado?" required className="h-12 rounded-2xl bg-card/10 border-border/60 px-6 text-sm font-medium focus:ring-primary/5 transition-all w-full cursor-text" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="customerPhone" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">WhatsApp</Label>
+                            <Input id="customerPhone" name="customerPhone" type="tel" value={orderDetails.customerPhone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-12 rounded-2xl bg-card/10 border-border/60 px-6 text-sm font-medium focus:ring-primary/5 transition-all w-full cursor-text" />
+                          </div>
+                          <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="customerEmail" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">E-mail</Label>
+                            <Input id="customerEmail" name="customerEmail" type="email" value={orderDetails.customerEmail} onChange={handleInputChange} placeholder="exemplo@gmail.com" required className="h-12 rounded-2xl bg-card/10 border-border/60 px-6 text-sm font-medium focus:ring-primary/5 transition-all w-full cursor-text" />
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="space-y-2 w-full">
                         <Label htmlFor="notes" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">Observações do Pedido</Label>
                         <textarea id="notes" name="notes" value={orderDetails.notes} onChange={handleInputChange} className="flex min-h-[120px] w-full rounded-[2rem] border border-border/60 bg-card/10 px-6 py-5 text-sm font-medium focus:ring-primary/5 resize-none transition-all placeholder:font-normal cursor-text" placeholder="Algum detalhe especial para nos contar?" />
                       </div>

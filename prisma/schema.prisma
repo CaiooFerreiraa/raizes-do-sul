@@ -12,6 +12,15 @@ model User {
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
   image         String?
+  password      String?
+  
+  // Informações de entrega/contato
+  phone         String?
+  street        String?
+  number        String?
+  neighborhood  String?
+  reference     String?
+
   accounts      Account[]
   sessions      Session[]
   

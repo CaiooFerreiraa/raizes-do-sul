@@ -11,6 +11,7 @@ Aplicação web para "Raízes do Sul", uma boutique de massas e bolos artesanais
 - Linguagem: TypeScript (strict mode)
 - Animações: Framer Motion
 - Banco de Dados: PostgreSQL (Neon) + Prisma
+- APIs: WhatsApp (Direct Linking), AbacatePay (Draft)
 
 ## Convenções e Padrões
 - Princípios da Clean Architecture: Divisão em `app`, `components`, `domain`, `infrastructure`, `lib`, `actions`.
@@ -118,3 +119,12 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - [2026-03-15] Correção — Corrigido erro de tipagem `asChild` em `DropdownMenuTrigger`. Substituído pelo prop `render` (padrão Base UI).
 - [2026-03-15] Design — Centralizado o resumo do checkout e aplicado redesign premium para melhor legibilidade e hierarquia.
 - [2026-03-15] Admin — Dashboard e gestão operacional de pedidos finalizados.
+- [2026-03-15] Interface — Criação da página pública de acompanhamento e tracking da encomenda pelo cliente (`/acompanhar/[id]`) com linha do tempo animada (Framer Motion).
+- [2026-03-15] Auth — Implementação do `AuthProvider` (SessionProvider) e integração do estado de login no `Header` e `AdminLayout`.
+- [2026-03-15] Arquitetura — Centralização de todas as Server Actions em `src/actions/` e proteção de rotas administrativas via checagem de sessão nas actions e no layout.
+- [2026-03-15] Design — Redesign da seção Hero para melhorar o respiro em dispositivos móveis, empilhando botões e ajustando tipografia.
+- [2026-03-15] Auth — Implementação de `middleware.ts` para proteção global de todo o site (exceto login/api) com redirecionamento automático.
+- [2026-03-15] Interface — Integração de menu de usuário completo no `Header` com suporte a logout e perfil, unificando a experiência de sessão em todo o site.
+- [2026-03-15] Segurança — Restrição de acesso às rotas administrativas (`/admin/*`) baseada no email definido na variável `NEXT_PUBLIC_ADMIN_EMAIL` no arquivo `.env`. Cabeçário das variáveis Next.js (`NEXT_PUBLIC_`) revisado.
+- [2026-03-15] Interface — Adição da métrica "Pagamentos Pendentes" no dashboard admin e botão de retorno rápido ao site público.
+- [2026-03-15] Feature — Implementação de redirecionamento automático para WhatsApp com resumo do pedido detalhado e aviso de frete variável para entregas.

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/providers/session-provider";
 
 const sans = Inter({
   variable: "--font-sans",
@@ -35,7 +36,9 @@ export default function RootLayout({
       <body
         className={`${sans.variable} ${display.variable} font-sans antialiased selection:bg-primary/20`}
       >
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

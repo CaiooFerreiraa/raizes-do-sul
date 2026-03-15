@@ -44,7 +44,7 @@ export default async function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-40 px-4 md:px-6 bg-secondary/30 relative overflow-hidden flex flex-col items-center justify-center min-h-[400px] md:min-h-[500px]">
+        <section className="w-full py-20 md:py-32 lg:py-40 px-4 md:px-6 bg-secondary/30 relative overflow-hidden flex flex-col items-center justify-center min-h-[500px] md:min-h-[600px]">
           <div className="absolute inset-0 z-0 text-center">
             <Image
               src="/logo.webp"
@@ -56,23 +56,23 @@ export default async function Home() {
           </div>
 
           <div className="container relative z-10 flex items-center justify-center">
-            <div className="flex flex-col items-center space-y-4 md:space-y-8 text-center">
-              <div className="space-y-3 md:space-y-6">
-                <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter font-display max-w-4xl leading-[1.1]">
+            <div className="flex flex-col items-center space-y-10 md:space-y-12 text-center">
+              <div className="space-y-4 md:space-y-8">
+                <h1 className="text-[2.5rem] sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter font-display max-w-4xl leading-[1.1]">
                   Sabor que vem das <span className="text-primary italic">Raízes</span>
                 </h1>
-                <p className="mx-auto max-w-[700px] text-muted-foreground text-base sm:text-lg md:text-2xl leading-relaxed px-4 md:px-0">
+                <p className="mx-auto max-w-[700px] text-muted-foreground text-sm sm:text-lg md:text-2xl leading-relaxed px-4 md:px-0">
                   Massas frescas e bolos artesanais feitos com carinho e tradição gaúcha.
                 </p>
               </div>
-              <div className="flex space-x-4">
-                <Link href="/encomenda">
-                  <Button size="lg" className="h-12 px-8 font-medium cursor-pointer rounded-full hover:scale-105 transition-transform">
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto px-6 sm:px-0">
+                <Link href="/encomenda" className="w-full sm:w-auto">
+                  <Button size="lg" className="h-14 sm:h-12 w-full sm:px-8 font-bold cursor-pointer rounded-full hover:scale-105 transition-transform text-base sm:text-sm uppercase tracking-widest shadow-lg shadow-primary/20">
                     Fazer Encomenda
                   </Button>
                 </Link>
-                <Link href="/loja">
-                  <Button variant="outline" size="lg" className="h-12 px-8 font-medium cursor-pointer rounded-full bg-background/20 backdrop-blur-sm border-primary/20 hover:bg-primary/5 text-primary">
+                <Link href="/loja" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="h-14 sm:h-12 w-full sm:px-8 font-bold cursor-pointer rounded-full bg-background/40 backdrop-blur-sm border-primary/20 hover:bg-primary/5 text-primary text-base sm:text-sm uppercase tracking-widest">
                     Conhecer produtos
                   </Button>
                 </Link>

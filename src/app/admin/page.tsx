@@ -85,7 +85,7 @@ export default async function AdminDashboard() {
   dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
 
   // Daily summary logic with fallback for potential Prisma Client sync issues
-  let [ordersToday, ordersTomorrow, pendingOrders, completedOrders] = [0, 0, 0, 0];
+  let [ordersToday, ordersTomorrow, pendingOrders, completedOrders, pendingPayment] = [0, 0, 0, 0, 0];
   
   try {
     const counts = await Promise.all([
@@ -93,14 +93,16 @@ export default async function AdminDashboard() {
       prisma.order.count({ where: { scheduledDate: { gte: tomorrowDate, lt: dayAfterTomorrow } } as any }),
       prisma.order.count({ where: { status: { in: ["RECEIVED", "CONFIRMED", "PRODUCTION", "PENDING"] } } }),
       prisma.order.count({ where: { status: { in: ["DELIVERED", "COMPLETED"] } } }),
+      prisma.order.count({ where: { paymentStatus: "PENDING" } }),
     ]);
-    [ordersToday, ordersTomorrow, pendingOrders, completedOrders] = counts;
+    [ordersToday, ordersTomorrow, pendingOrders, completedOrders, pendingPayment] = counts;
   } catch (error) {
     console.error("Erro ao carregar resumo operacional:", error);
     // Fallback to basic counts without date filtering if scheduledDate is unknown
     try {
       pendingOrders = await prisma.order.count({ where: { status: { in: ["RECEIVED", "CONFIRMED", "PRODUCTION", "PENDING"] } } });
       completedOrders = await prisma.order.count({ where: { status: { in: ["DELIVERED", "COMPLETED"] } } });
+      pendingPayment = await prisma.order.count({ where: { paymentStatus: "PENDING" } });
     } catch (e) {
       console.error("Erro no fallback de contagem:", e);
     }
@@ -109,17 +111,18 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-12 max-w-6xl mx-auto">
       {/* Resumo Operacional */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {[
           { label: "Hoje", count: ordersToday, color: "bg-primary" },
           { label: "Amanhã", count: ordersTomorrow, color: "bg-blue-500" },
-          { label: "Pendentes", count: pendingOrders, color: "bg-amber-500" },
+          { label: "Ped. Pendentes", count: pendingOrders, color: "bg-amber-500" },
+          { label: "Pag. Pendentes", count: pendingPayment, color: "bg-red-500" },
           { label: "Concluídos", count: completedOrders, color: "bg-green-500" }
         ].map((item) => (
           <div key={item.label} className="bg-card border border-border/40 rounded-3xl p-6 flex items-center justify-between shadow-sm">
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{item.label}</p>
-              <p className="text-3xl font-bold mt-1">{item.count}</p>
+              <p className="text-2xl font-bold mt-1">{item.count}</p>
             </div>
             <div className={`h-10 w-10 rounded-2xl ${item.color} flex items-center justify-center text-white font-bold opacity-20`}>
               {item.label[0]}
@@ -129,10 +132,16 @@ export default async function AdminDashboard() {
       </div>
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="font-display text-4xl sm:text-6xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="font-display text-4xl sm:text-6xl font-bold text-foreground tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-3 text-lg md:text-xl">Acompanhe o crescimento das Raízes do Sul.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <Link href="/">
+            <Button variant="outline" className="rounded-xl h-12 cursor-pointer border-border/50 bg-background/50 backdrop-blur-sm">
+              <Star className="mr-2 h-4 w-4 text-primary" />
+              Ir para Loja
+            </Button>
+          </Link>
           <Link href="/admin/pedidos">
             <Button variant="outline" className="rounded-xl h-12 cursor-pointer border-border/50">
               <ShoppingBag className="mr-2 h-4 w-4" />

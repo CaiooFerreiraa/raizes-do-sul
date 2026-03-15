@@ -2,8 +2,12 @@
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
 
 export async function createProductAction(formData: FormData) {
+  const session = await auth();
+  if (!session) throw new Error("Não autorizado");
+
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const priceStr = formData.get("price") as string;
@@ -28,6 +32,9 @@ export async function createProductAction(formData: FormData) {
 }
 
 export async function deleteProductAction(id: string) {
+  const session = await auth();
+  if (!session) throw new Error("Não autorizado");
+
   await prisma.product.delete({ where: { id } });
   revalidatePath("/admin/produtos");
 }
