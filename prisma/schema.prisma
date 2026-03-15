@@ -73,14 +73,30 @@ model Order {
   customerName  String   @map("customer_name")
   customerEmail String   @map("customer_email")
   customerPhone String?  @map("customer_phone")
-  status        String   @default("PENDING")
+  status        String   @default("PENDING") // RECEIVED, CONFIRMED, PRODUCTION, SHIPPING, DELIVERED, CANCELLED
   total         Decimal  @db.Decimal(10, 2)
   notes         String?  @db.Text
   
   items         OrderItem[]
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  deliveryType  String   @default("PICKUP") @map("delivery_type") // PICKUP, DELIVERY
+  pickupPoint   String?  @map("pickup_point") // "Loja", "Feira"
+  
+  // Address for delivery
+  street        String?
+  number        String?
+  neighborhood  String?
+  reference     String?
+  
+  paymentMethod String   @default("PIX") @map("payment_method")
+  paymentStatus String   @default("PENDING") @map("payment_status")
+  depositPaid   Boolean  @default(false) @map("deposit_paid")
+  
+  scheduledDate DateTime? @map("scheduled_date")
+  scheduledTime String?   @map("scheduled_time")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("orders")
 }

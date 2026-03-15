@@ -7,9 +7,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { createOrder } from "../actions/order";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger 
+} from "@/components/ui/sheet";
 
-import { BackButton } from "@/components/ui/back-button";
-import { Search } from "lucide-react";
+import { 
+  Search, 
+  Truck, 
+  CreditCard, 
+  Wallet, 
+  QrCode, 
+  Building2, 
+  MapPin,
+  AlertCircle, 
+  ChevronRight, 
+  ChevronLeft,
+  ShoppingBag,
+  CheckCircle2,
+  Package,
+  Trash2,
+  ShoppingBasket,
+  Minus,
+  Plus,
+  ArrowRight,
+  ArrowLeft
+} from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ProductDTO = {
   id: string;
@@ -19,19 +54,37 @@ type ProductDTO = {
   imageUrl: string | null;
 };
 
+type Step = "selection" | "checkout" | "success";
+
 function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }) {
+  const [step, setStep] = useState<Step>("selection");
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deliveryType, setDeliveryType] = useState("PICKUP");
+  const [pickupPoint, setPickupPoint] = useState("LOJA");
+  const [paymentMethod, setPaymentMethod] = useState("PIX");
+  const [orderDetails, setOrderDetails] = useState({
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    notes: "",
+    street: "",
+    number: "",
+    neighborhood: "",
+    reference: "",
+    scheduledDate: new Date().toISOString().split('T')[0],
+    scheduledTime: ""
+  });
+  
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Handle prepopulation from URL
   useEffect(() => {
     const productId = searchParams.get("productId");
     if (productId && initialProducts.some((p: ProductDTO) => p.id === productId)) {
       setQuantities(prev => {
-        if (prev[productId]) return prev; // Already handled or manually changed
+        if (prev[productId]) return prev;
         return { ...prev, [productId]: 1 };
       });
     }
@@ -57,207 +110,711 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
     return total;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const selectedProducts = initialProducts.filter((p: ProductDTO) => (quantities[p.id] || 0) > 0);
+  const totalItems = Object.values(quantities).reduce((a, b) => a + b, 0);
+
+  const handleNextStep = () => {
+    if (totalItems === 0) {
+      toast.error("Selecione itens para continuar.");
+      return;
+    }
+    setStep("checkout");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handlePrevStep = () => {
+    if (step === "checkout") {
+      setStep("selection");
+    } else {
+      router.back();
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setOrderDetails(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const customerName = formData.get("customerName") as string;
-    const customerEmail = formData.get("customerEmail") as string;
-    const customerPhone = formData.get("customerPhone") as string;
-    const notes = formData.get("notes") as string;
-
-    const items = initialProducts
-      .filter((p: ProductDTO) => (quantities[p.id] || 0) > 0)
-      .map((p: ProductDTO) => ({
-        productId: p.id,
-        name: p.name, // Send name for mock/catalog support
-        quantity: quantities[p.id],
-        price: parseFloat(p.price),
-      }));
-
-    if (items.length === 0) {
-      toast.error("Por favor, selecione pelo menos um produto.");
+    if (!orderDetails.customerName || !orderDetails.customerEmail) {
+      toast.error("Preencha seu nome e e-mail.");
       return;
     }
 
-    if (!customerName || !customerEmail) {
-      toast.error("Nome e E-mail são obrigatórios.");
-      return;
-    }
+    const items = selectedProducts.map((p: ProductDTO) => ({
+      productId: p.id,
+      name: p.name,
+      quantity: quantities[p.id],
+      price: parseFloat(p.price),
+    }));
 
     setLoading(true);
     const res = await createOrder({
-      customerName,
-      customerEmail,
-      customerPhone,
-      notes,
+      ...orderDetails,
+      deliveryType,
+      pickupPoint: deliveryType === "PICKUP" ? pickupPoint : undefined,
+      paymentMethod,
       items,
     });
     setLoading(false);
 
     if (res.success) {
-      toast.success("Encomenda enviada com sucesso! Em breve entraremos em contato.");
+      setStep("success");
       setQuantities({});
-      (e.target as HTMLFormElement).reset();
-      router.push("/");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      toast.error(res.error || "Ocorreu um erro. Tente novamente.");
+      toast.error(res.error || "Ocorreu um erro ao enviar.");
     }
   };
 
-  const selectedProducts = initialProducts.filter((p: ProductDTO) => (quantities[p.id] || 0) > 0);
+  if (step === "success") {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-12 w-full max-w-2xl mx-auto px-6"
+      >
+        <div className="relative">
+          <motion.div 
+            initial={{ scale: 0, rotate: -45 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", damping: 15, stiffness: 150, delay: 0.2 }}
+            className="h-32 w-32 bg-primary flex items-center justify-center text-white rounded-[2.5rem] shadow-2xl shadow-primary/30"
+          >
+            <CheckCircle2 size={56} strokeWidth={1.5} />
+          </motion.div>
+          
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.4, 1], 
+              opacity: [0.2, 0.05, 0.2],
+              rotate: [0, 90, 180, 270, 360]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className="absolute inset-0 bg-primary/20 rounded-[3rem] blur-3xl -z-10"
+          />
+        </div>
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-10 md:space-y-16">
-      <div className="flex flex-col gap-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <BackButton />
-            <div className="border-l border-border/50 pl-6 py-1">
-              <h2 className="text-2xl font-display font-semibold">Sua Encomenda</h2>
-              <p className="text-muted-foreground text-sm">Revise os itens e adicione mais se desejar.</p>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h2 className="text-4xl md:text-5xl font-display font-bold text-primary tracking-tight">Recebemos seu pedido!</h2>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Obrigado pela preferência</p>
+          </div>
+          
+          <p className="text-sm md:text-md text-muted-foreground max-w-md mx-auto leading-relaxed font-medium">
+            Sua encomenda está em nossa fila de produção. Em instantes, nossa equipe entrará em contato via <b>WhatsApp</b> para confirmar os detalhes e combinar o pagamento do <b>sinal de 50%</b>.
+          </p>
+        </div>
+
+        <div className="bg-primary/5 border border-primary/10 p-8 rounded-[2.5rem] w-full space-y-4">
+          <div className="flex items-center justify-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <QrCode size={20} />
+            </div>
+            <div className="text-left">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Próximo Passo</p>
+              <p className="text-xs font-bold">Fique atento ao seu WhatsApp</p>
             </div>
           </div>
         </div>
 
-        {/* Selected Items / "Cart" View */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Itens Selecionados</h3>
-          {selectedProducts.length === 0 ? (
-            <div className="p-8 border-2 border-dashed border-border/50 rounded-2xl text-center bg-secondary/5">
-              <p className="text-muted-foreground">Nenhum item selecionado. Procure no cardápio abaixo.</p>
+        <div className="pt-4 flex flex-col sm:flex-row gap-4 w-full justify-center">
+          <Button 
+            onClick={() => router.push("/")} 
+            className="rounded-full px-12 h-14 text-[10px] font-bold uppercase tracking-widest bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
+          >
+            Voltar ao Início
+          </Button>
+          <Button 
+            onClick={() => window.open('https://wa.me/5553999999999', '_blank')} 
+            variant="outline"
+            className="rounded-full px-10 h-14 text-[10px] font-bold uppercase tracking-widest border-border/40 text-muted-foreground hover:bg-card/40 transition-all cursor-pointer"
+          >
+            Chamar no Whats
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background w-full flex flex-col items-stretch">
+      {/* Header Fixo Full Width */}
+      <header className="sticky top-0 z-40 bg-background/60 backdrop-blur-xl border-b border-border/10 py-3 px-4 md:px-10 w-full">
+        <div className="w-full flex items-center justify-between gap-2 max-w-[1600px] mx-auto">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handlePrevStep}
+              className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-border/10 hover:bg-primary/5 hover:text-primary transition-all group cursor-pointer"
+            >
+              <ChevronLeft className="h-4 w-4 md:h-5 md:w-5 group-hover:-translate-x-0.5 transition-transform" />
+            </Button>
+            <div>
+              <h2 className="text-lg md:text-xl font-display font-medium text-primary tracking-tight leading-tight">
+                {step === "selection" ? "Encomenda" : "Checkout"}
+              </h2>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] ${step === 'selection' ? 'text-primary' : 'text-muted-foreground/60'}`}>Seleção</span>
+                <span className="text-muted-foreground/40 text-[9px]">/</span>
+                <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] ${step === 'checkout' ? 'text-primary' : 'text-muted-foreground/60'}`}>Pagamento</span>
+              </div>
             </div>
-          ) : (
-            <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
-              {selectedProducts.map((p: ProductDTO) => {
-                const q = quantities[p.id] || 0;
-                return (
-                  <div key={p.id} className="flex items-center justify-between p-4 bg-primary/5 border border-primary/20 rounded-2xl shadow-sm">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-foreground">{p.name}</span>
-                      <span className="text-xs text-primary font-semibold">
-                        R$ {parseFloat(p.price).toFixed(2).replace(".", ",")}
-                      </span>
+          </div>
+          
+          <div className="flex items-center gap-2 md:gap-4">
+            {step === "selection" && totalItems > 0 && (
+              <div className="flex items-center gap-2 md:gap-3">
+                {/* Botão da Sacola para Mobile */}
+                <div className="lg:hidden">
+                  <Sheet>
+                    <SheetTrigger render={
+                      <Button variant="outline" size="icon" className="h-9 w-9 rounded-full border-primary/20 bg-primary/5 text-primary relative cursor-pointer">
+                        <ShoppingBasket size={16} />
+                        {totalItems > 0 && (
+                          <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-background">
+                            {totalItems}
+                          </span>
+                        )}
+                      </Button>
+                    } />
+                    <SheetContent side="right" className="w-[85vw] sm:w-[400px] border-l-border/10 p-0 overflow-y-auto">
+                        <div className="p-8 space-y-8">
+                          <SheetHeader className="text-left space-y-1">
+                            <SheetTitle className="text-2xl font-display font-bold text-primary">Sua Sacola</SheetTitle>
+                            <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-[0.1em]">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
+                          </SheetHeader>
+                          
+                          <div className="space-y-4">
+                            {selectedProducts.length === 0 ? (
+                              <div className="py-20 text-center space-y-4">
+                                <ShoppingBag size={40} className="mx-auto text-muted-foreground/10" />
+                                <p className="text-xs font-medium text-muted-foreground/60 italic">Sua sacola está vazia</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                {selectedProducts.map((p) => (
+                                  <div key={p.id} className="flex justify-between items-center group bg-primary/[0.02] p-4 rounded-2xl border border-primary/5">
+                                    <div className="flex-1">
+                                      <p className="font-bold text-xs text-primary/80">{p.name}</p>
+                                      <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-wider">R$ {parseFloat(p.price).toFixed(2)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <div className="flex items-center bg-background rounded-full border border-border/40 p-1">
+                                        <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(p.id, -1)}><Minus size={12} /></button>
+                                        <span className="text-xs font-bold w-6 text-center">{quantities[p.id]}</span>
+                                        <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(p.id, 1)}><Plus size={12} /></button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+ 
+                          <div className="pt-8 border-t border-border/10 space-y-6">
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground font-bold text-[11px] uppercase tracking-[0.2em]">Total</span>
+                              <span className="text-3xl font-display font-bold text-primary tracking-tight">R$ {getSubtotal().toFixed(2).replace(".", ",")}</span>
+                            </div>
+                            <Button 
+                              onClick={handleNextStep}
+                              className="w-full h-14 rounded-2xl text-xs font-bold uppercase tracking-widest bg-primary text-white shadow-xl shadow-primary/20"
+                            >
+                              Finalizar Pedido
+                            </Button>
+                          </div>
+                        </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
+                <Button 
+                  onClick={handleNextStep}
+                  className="rounded-full h-9 md:h-11 px-4 md:px-6 font-bold text-[10px] md:text-xs shadow-md group hover:scale-[1.01] active:scale-95 transition-all cursor-pointer bg-primary text-white"
+                >
+                  Prosseguir
+                  <ArrowRight className="ml-1 md:ml-2 h-3 w-3 md:h-4 md:w-4 group-hover:translate-x-0.5 transition-transform" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 w-full px-6 md:px-12 pb-20 mt-8">
+        <AnimatePresence mode="wait">
+          {step === "selection" ? (
+            <motion.div
+              key="selection"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full h-full"
+            >
+              <div className="flex flex-col lg:flex-row gap-12 items-start relative w-full h-full">
+                {/* Lateral Esquerda: Sacola Única */}
+                <aside className="hidden lg:block sticky top-32 w-[350px] flex-shrink-0 z-30">
+                  <div className="bg-card/40 backdrop-blur-md border border-border/25 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.03)] rounded-3xl p-6 space-y-6">
+                    <div className="flex items-center justify-between border-b border-border/5 pb-5">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center">
+                          <ShoppingBasket size={20} />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-display font-medium tracking-tight">Sua Sacola</h3>
+                          <p className="text-[9px] text-muted-foreground/80 font-medium uppercase tracking-[0.1em]">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-3 bg-background rounded-full border border-border/50 p-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-full text-primary hover:bg-primary/10"
-                          onClick={() => handleQuantity(p.id, -1)}
+
+                    <div className="space-y-4">
+                      {selectedProducts.length === 0 ? (
+                        <div className="py-16 text-center space-y-3">
+                          <div className="h-16 w-16 mx-auto bg-muted/10 rounded-full flex items-center justify-center text-muted-foreground/20">
+                            <ShoppingBag size={28} />
+                          </div>
+                          <p className="text-[11px] font-medium text-muted-foreground/60 italic px-6 leading-relaxed">Selecione produtos para começar</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-2 custom-scrollbar">
+                          {selectedProducts.map((p) => (
+                            <motion.div layout key={p.id} className="flex justify-between items-center group bg-primary/[0.02] p-3 rounded-xl border border-primary/5 hover:border-primary/10 transition-all">
+                              <div className="flex-1 space-y-0.5">
+                                <p className="font-medium text-[11px] leading-tight text-primary/80">{p.name}</p>
+                                <p className="text-[9px] text-muted-foreground/80 font-medium uppercase tracking-wider">R$ {parseFloat(p.price).toFixed(2)}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center bg-background/50 rounded-full border border-border/40 p-0.5">
+                                  <button 
+                                    className="h-6 w-6 rounded-full flex items-center justify-center text-primary hover:bg-primary/5 cursor-pointer transition-colors" 
+                                    onClick={() => handleQuantity(p.id, -1)}
+                                  >
+                                    <Minus size={10} />
+                                  </button>
+                                  <span className="text-[10px] font-bold w-5 text-center">{quantities[p.id]}</span>
+                                  <button 
+                                    className="h-6 w-6 rounded-full flex items-center justify-center text-primary hover:bg-primary/5 cursor-pointer transition-colors" 
+                                    onClick={() => handleQuantity(p.id, 1)}
+                                  >
+                                    <Plus size={10} />
+                                  </button>
+                                </div>
+                                <button 
+                                  className="h-7 w-7 text-muted-foreground/20 hover:text-destructive hover:bg-destructive/5 rounded-full transition-colors cursor-pointer flex items-center justify-center"
+                                  onClick={() => handleQuantity(p.id, -quantities[p.id])}
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="space-y-4 pt-4 border-t border-border/5">
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground font-medium text-[10px] uppercase tracking-wider">Total</span>
+                          <span className="text-2xl font-display font-medium text-primary tracking-tight">R$ {getSubtotal().toFixed(2).replace(".", ",")}</span>
+                        </div>
+
+                        <Button 
+                          onClick={handleNextStep}
+                          disabled={totalItems === 0}
+                          className="w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer group bg-primary text-white border-b-2 border-primary-dark/20"
                         >
-                          -
+                          Checkout
+                          <ChevronRight size={14} className="ml-1 group-hover:translate-x-0.5 transition-transform" />
                         </Button>
-                        <span className="font-bold w-4 text-center text-sm">{q}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-full text-primary hover:bg-primary/10"
-                          onClick={() => handleQuantity(p.id, 1)}
-                        >
-                          +
-                        </Button>
+
+                        <div className="bg-primary/5 p-5 rounded-2xl border border-primary/10 flex items-start gap-4">
+                          <AlertCircle size={20} className="text-primary shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-muted-foreground leading-relaxed font-bold">
+                            Pedimos <span className="text-primary font-bold underline decoration-2 underline-offset-4">50% de entrada</span> para confirmar a produção.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+                </aside>
 
-        {/* Catalog / Search Section */}
-        <div className="pt-8 border-t border-border/50 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Adicionar mais itens</h3>
-            <div className="relative group max-w-sm w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input
-                placeholder="Procurar no cardápio..."
-                className="pl-10 h-10 rounded-xl bg-secondary/10 border-border/50 focus-visible:ring-primary/20 cursor-text"
-                value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {(searchTerm || selectedProducts.length === 0) && (
-            <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.filter((p: ProductDTO) => (quantities[p.id] || 0) === 0).map((p: ProductDTO) => (
-                <div key={p.id} className="flex flex-col border border-border/50 rounded-xl p-3 bg-card hover:border-primary/30 transition-all group">
-                  <div className="flex flex-col mb-2">
-                    <h4 className="font-semibold text-sm line-clamp-1">{p.name}</h4>
-                    <span className="font-bold text-primary text-xs">R$ {parseFloat(p.price).toFixed(2).replace(".", ",")}</span>
+                {/* Direita: Catálogo */}
+                <main className="flex-1 space-y-8">
+                  <div className="flex flex-col md:flex-row gap-6 md:items-center justify-between">
+                    <div className="relative group flex-1 max-w-md">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70 group-focus-within:text-primary transition-colors" />
+                      <Input
+                        placeholder="Pesquisar..."
+                        className="pl-11 h-11 rounded-full bg-background border-border/40 focus-visible:ring-primary/5 cursor-text text-sm shadow-sm transition-all"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/20 px-4 py-2 rounded-full border border-border/20">
+                      {filteredProducts.length} itens encontrados
+                    </div>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 rounded-full text-[10px] w-full mt-auto font-bold hover:bg-primary hover:text-white transition-all cursor-pointer"
-                    onClick={() => handleQuantity(p.id, 1)}
-                  >
-                    + Incluir
-                  </Button>
+
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                    {filteredProducts.map((p) => {
+                      const q = quantities[p.id] || 0;
+                      return (
+                        <motion.div 
+                          layout 
+                          key={p.id} 
+                          className={`group bg-white dark:bg-card/40 rounded-2xl border border-border/40 transition-all duration-300 overflow-hidden flex flex-col h-full hover:shadow-lg hover:shadow-primary/5 ${q > 0 ? 'border-primary' : 'hover:border-primary/40'}`}
+                        >
+                          <div className="aspect-[16/10] relative overflow-hidden m-3 rounded-xl border border-border/15">
+                            {p.imageUrl ? (
+                              <img src={p.imageUrl} alt={p.name} className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+                            ) : (
+                              <div className="w-full h-full bg-muted/20 flex items-center justify-center">
+                                <Package size={24} className="text-primary/10" />
+                              </div>
+                            )}
+                            
+                            {q > 0 && (
+                              <motion.div 
+                                initial={{ scale: 0.5, opacity: 0 }} 
+                                animate={{ scale: 1, opacity: 1 }} 
+                                className="absolute top-3 right-3 bg-primary text-white h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shadow-lg"
+                              >
+                                {q}
+                              </motion.div>
+                            )}
+                          </div>
+                          
+                          <div className="px-5 pb-5 flex flex-col flex-1 space-y-4">
+                            <div>
+                              <h4 className="font-display font-medium text-base group-hover:text-primary transition-colors duration-300">{p.name}</h4>
+                              <p className="text-[11px] text-muted-foreground/90 font-medium line-clamp-2 mt-1 leading-relaxed">{p.description || "Receita artesanal feita com ingredientes selecionados."}</p>
+                            </div>
+                            
+                            <div className="pt-2 flex items-center justify-between mt-auto">
+                              <span className="font-display font-medium text-lg text-primary">R$ {parseFloat(p.price).toFixed(2).replace(".", ",")}</span>
+                              
+                              <div className="flex items-center gap-1">
+                                {q > 0 ? (
+                                  <div className="flex items-center bg-muted/40 rounded-full p-1 border border-border/20">
+                                    <button 
+                                      className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-background transition-colors cursor-pointer text-muted-foreground hover:text-primary" 
+                                      onClick={() => handleQuantity(p.id, -1)}
+                                    >
+                                      <Minus size={12} />
+                                    </button>
+                                    <span className="text-xs font-semibold w-6 text-center">{q}</span>
+                                    <button 
+                                      className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-background transition-colors cursor-pointer text-muted-foreground hover:text-primary" 
+                                      onClick={() => handleQuantity(p.id, 1)}
+                                    >
+                                      <Plus size={12} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <Button 
+                                    variant="outline"
+                                    onClick={() => handleQuantity(p.id, 1)}
+                                    className="rounded-full h-8 px-4 text-[11px] font-medium border-primary/20 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer"
+                                  >
+                                    Adicionar
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </main>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="checkout"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="w-full h-full flex flex-col lg:flex-row gap-16 items-start max-w-[1400px] mx-auto justify-center"
+            >
+              <div className="flex-1">
+                <form onSubmit={handleSubmit} className="space-y-10">
+                  <div className="grid md:grid-cols-2 gap-10">
+                    {/* Entrega ou Retirada */}
+                    <div className="space-y-5">
+                      <Label className="text-xs font-bold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-2 ml-1">
+                        <Truck size={14} />
+                        Como deseja receber?
+                      </Label>
+                      <RadioGroup defaultValue="PICKUP" value={deliveryType} onValueChange={setDeliveryType} className="grid grid-cols-2 gap-4">
+                        <Label htmlFor="pickup" className={`flex flex-col items-center justify-center rounded-[1.5rem] border p-5 cursor-pointer transition-all ${deliveryType === "PICKUP" ? 'border-primary bg-primary/[0.03] ring-1 ring-primary/10' : 'border-border/30 bg-card/20 hover:border-primary/30'}`}>
+                          <RadioGroupItem value="PICKUP" id="pickup" className="sr-only" />
+                          <Building2 size={24} className={`mb-2 ${deliveryType === "PICKUP" ? 'text-primary' : 'text-muted-foreground/20'}`} />
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${deliveryType === "PICKUP" ? 'text-primary' : 'text-muted-foreground/60'}`}>Retirar</span>
+                        </Label>
+                        <Label htmlFor="delivery" className={`flex flex-col items-center justify-center rounded-[1.5rem] border p-5 cursor-pointer transition-all ${deliveryType === "DELIVERY" ? 'border-primary bg-primary/[0.03] ring-1 ring-primary/10' : 'border-border/30 bg-card/20 hover:border-primary/30'}`}>
+                          <RadioGroupItem value="DELIVERY" id="delivery" className="sr-only" />
+                          <Truck size={24} className={`mb-2 ${deliveryType === "DELIVERY" ? 'text-primary' : 'text-muted-foreground/20'}`} />
+                          <span className={`text-[10px] font-bold uppercase tracking-widest ${deliveryType === "DELIVERY" ? 'text-primary' : 'text-muted-foreground/60'}`}>Delivery</span>
+                        </Label>
+                      </RadioGroup>
+
+                      <AnimatePresence mode="wait">
+                        {deliveryType === "PICKUP" && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="space-y-3 pt-2"
+                          >
+                            <Label className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-wider ml-1">Onde deseja retirar?</Label>
+                            <RadioGroup value={pickupPoint} onValueChange={setPickupPoint} className="grid grid-cols-2 gap-2">
+                              <Label htmlFor="loja" className={`text-center py-2.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest cursor-pointer transition-all ${pickupPoint === "LOJA" ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-background/40 border-border/30 text-muted-foreground/60'}`}>
+                                <RadioGroupItem value="LOJA" id="loja" className="sr-only" />
+                                Na Loja
+                              </Label>
+                              <Label htmlFor="feira" className={`text-center py-2.5 rounded-xl border text-[10px] font-bold uppercase tracking-widest cursor-pointer transition-all ${pickupPoint === "FEIRA" ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-background/40 border-border/30 text-muted-foreground/60'}`}>
+                                <RadioGroupItem value="FEIRA" id="feira" className="sr-only" />
+                                Na Feira
+                              </Label>
+                            </RadioGroup>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Forma de Pagamento */}
+                    <div className="space-y-4">
+                      <Label className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest flex items-center gap-2 ml-1">
+                        <CreditCard size={12} />
+                        Pagamento
+                      </Label>
+                      <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: "PIX", label: "Pix", icon: QrCode },
+                          { id: "DEBIT", label: "Débito", icon: CreditCard },
+                          { id: "CREDIT", label: "Crédito", icon: CreditCard },
+                          { id: "CASH", label: "Dinheiro", icon: Wallet }
+                        ].map((m) => (
+                          <Label 
+                            key={m.id} 
+                            htmlFor={m.id} 
+                            className={`flex flex-col items-center justify-center rounded-2xl border p-4 cursor-pointer transition-all ${paymentMethod === m.id ? 'border-primary bg-primary/[0.03] text-primary shadow-sm' : 'border-border/60 bg-card/10 text-muted-foreground/60 hover:border-primary/40'}`}
+                          >
+                            <RadioGroupItem value={m.id} id={m.id} className="sr-only" />
+                            <m.icon size={20} className="mb-2" />
+                            <span className="text-[11px] font-bold uppercase tracking-widest">{m.label}</span>
+                          </Label>
+                        ))}
+                      </RadioGroup>
+                      <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-widest px-1 italic">Finalização via WhatsApp</p>
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {deliveryType === "DELIVERY" && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-6 bg-primary/[0.02] p-7 rounded-3xl border border-primary/5 mb-8">
+                          <h4 className="text-[10px] font-bold text-primary/80 uppercase tracking-widest flex items-center gap-2 ml-1">
+                            <MapPin size={12} />
+                            Endereço de Entrega
+                          </h4>
+                          <div className="grid gap-5 md:grid-cols-4">
+                            <div className="md:col-span-3 space-y-2">
+                              <Label htmlFor="street" className="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">Rua / Logradouro</Label>
+                              <Input id="street" name="street" value={orderDetails.street} onChange={handleInputChange} placeholder="Ex: Rua das Flores" className="h-12 rounded-2xl bg-background border-border/60 px-5 text-sm font-medium focus:ring-primary/5 transition-all w-full" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="number" className="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">Nº</Label>
+                              <Input id="number" name="number" value={orderDetails.number} onChange={handleInputChange} placeholder="123" className="h-12 rounded-2xl bg-background border-border/60 px-5 text-sm font-medium focus:ring-primary/5 transition-all w-full" />
+                            </div>
+                            <div className="md:col-span-2 space-y-2">
+                              <Label htmlFor="neighborhood" className="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">Bairro</Label>
+                              <Input id="neighborhood" name="neighborhood" value={orderDetails.neighborhood} onChange={handleInputChange} placeholder="Ex: Centro" className="h-12 rounded-2xl bg-background border-border/60 px-5 text-sm font-medium focus:ring-primary/5 transition-all w-full" />
+                            </div>
+                            <div className="md:col-span-2 space-y-2">
+                              <Label htmlFor="reference" className="text-[10px] uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">Referência</Label>
+                              <Input id="reference" name="reference" value={orderDetails.reference} onChange={handleInputChange} placeholder="Perto de..." className="h-12 rounded-2xl bg-background border-border/60 px-5 text-sm font-medium focus:ring-primary/5 transition-all w-full" />
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="grid md:grid-cols-2 gap-10">
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-bold text-muted-foreground/80 uppercase tracking-widest flex items-center gap-2 ml-1">
+                        <Package size={12} />
+                        Quando {deliveryType === "PICKUP" ? "vai retirar" : "vai receber"}?
+                      </Label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="scheduledDate" className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-bold ml-1">Data</Label>
+                          <Input id="scheduledDate" name="scheduledDate" type="date" value={orderDetails.scheduledDate} onChange={handleInputChange} className="h-12 rounded-2xl bg-background border-border/40 px-5 text-sm font-medium focus:ring-primary/5 cursor-pointer" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="scheduledTime" className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-bold ml-1">Horário (Opcional)</Label>
+                          <Input id="scheduledTime" name="scheduledTime" type="time" value={orderDetails.scheduledTime} onChange={handleInputChange} className="h-12 rounded-2xl bg-background border-border/40 px-5 text-sm font-medium focus:ring-primary/5 cursor-pointer" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Aviso de Pagamento Antecipado */}
+                  <div className="bg-amber-500/[0.03] border border-amber-500/10 rounded-[2rem] p-6 flex items-start gap-4 shadow-sm shadow-amber-500/5">
+                    <div className="h-10 w-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
+                      <AlertCircle size={18} className="text-amber-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-amber-900/80 uppercase tracking-wider">Atenção: Finalização do Pedido</h4>
+                      <p className="text-xs text-amber-900/80 leading-relaxed font-bold">A produção de pedidos por encomenda inicia apenas após a confirmação do pagamento de <span className="text-amber-700 underline decoration-2 underline-offset-4">50% do valor total</span> via WhatsApp.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-8">
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2 border-b border-border/10 pb-5 ml-1">
+                      <ShoppingBag size={14} className="text-primary/60" />
+                      Seus Dados
+                    </h4>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="customerName" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">Nome Completo</Label>
+                        <Input id="customerName" name="customerName" value={orderDetails.customerName} onChange={handleInputChange} placeholder="Como deseja ser chamado?" required className="h-12 rounded-2xl bg-card/10 border-border/60 px-6 text-sm font-medium focus:ring-primary/5 transition-all w-full cursor-text" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="customerPhone" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">WhatsApp</Label>
+                        <Input id="customerPhone" name="customerPhone" type="tel" value={orderDetails.customerPhone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-12 rounded-2xl bg-card/10 border-border/60 px-6 text-sm font-medium focus:ring-primary/5 transition-all w-full cursor-text" />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="customerEmail" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">E-mail</Label>
+                        <Input id="customerEmail" name="customerEmail" type="email" value={orderDetails.customerEmail} onChange={handleInputChange} placeholder="exemplo@gmail.com" required className="h-12 rounded-2xl bg-card/10 border-border/60 px-6 text-sm font-medium focus:ring-primary/5 transition-all w-full cursor-text" />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="notes" className="text-xs uppercase tracking-wider text-muted-foreground/80 font-bold ml-1">Observações do Pedido</Label>
+                        <textarea id="notes" name="notes" value={orderDetails.notes} onChange={handleInputChange} className="flex min-h-[120px] w-full rounded-[2rem] border border-border/60 bg-card/10 px-6 py-5 text-sm font-medium focus:ring-primary/5 resize-none transition-all placeholder:font-normal cursor-text" placeholder="Algum detalhe especial para nos contar?" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
+                    <Button 
+                      type="submit" 
+                      disabled={loading} 
+                      className="w-full sm:w-auto h-12 px-12 rounded-full text-xs font-bold transition-all group cursor-pointer bg-primary text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] active:scale-95 border-b-2 border-primary-dark/20"
+                    >
+                      {loading ? "Processando..." : (
+                        <span className="flex items-center gap-2">
+                          Confirmar Encomenda
+                          <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                        </span>
+                      )}
+                    </Button>
+                    <p className="text-[10px] text-muted-foreground/70 font-bold max-w-[180px] italic leading-relaxed uppercase tracking-widest">
+                      Finalização artesanal e humana via WhatsApp.
+                    </p>
+                  </div>
+                </form>
+              </div>
+
+              <aside className="lg:w-[380px] lg:sticky lg:top-32 h-fit w-full flex justify-center">
+                <div className="bg-card/20 backdrop-blur-md border border-border/60 rounded-[2.5rem] p-10 space-y-8 w-full shadow-xl flex flex-col items-center text-center relative overflow-hidden">
+                  <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                  <h3 className="text-[11px] font-bold text-muted-foreground/40 uppercase tracking-[0.4em] ml-1">Resumo</h3>
+                  
+                  <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                    {selectedProducts.map((p) => (
+                      <div key={p.id} className="flex flex-col items-center gap-1.5 peer group">
+                        <div className="space-y-1">
+                          <p className="font-bold text-xs text-primary/80 group-hover:text-primary transition-colors">{p.name}</p>
+                          <p className="text-[9px] text-muted-foreground/60 font-bold uppercase tracking-widest">{quantities[p.id]} UN · R$ {parseFloat(p.price).toFixed(2).replace(".", ",")}</p>
+                        </div>
+                        <p className="text-[13px] font-display font-bold text-primary">R$ {(quantities[p.id] * parseFloat(p.price)).toFixed(2).replace(".", ",")}</p>
+                        <div className="w-8 h-px bg-border/10 mt-2 group-last:hidden" />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4 pt-2 w-full flex flex-col items-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-muted-foreground text-[10px] uppercase tracking-[0.3em] font-black opacity-30">Subtotal</span>
+                      <span className="text-5xl font-display font-bold text-primary tracking-tighter">R$ {getSubtotal().toFixed(2).replace(".", ",")}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-7 bg-primary/[0.03] rounded-[2.5rem] border border-primary/10 space-y-3 w-full flex flex-col items-center shadow-inner">
+                    <div className="flex items-center gap-2 opacity-50">
+                      <AlertCircle size={12} className="text-primary" />
+                      <span className="text-[9px] font-bold uppercase tracking-widest">Sinal Bancário (50%)</span>
+                    </div>
+                    <p className="text-3xl font-display font-bold tracking-tight text-primary">R$ {(getSubtotal() / 2).toFixed(2).replace(".", ",")}</p>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </aside>
+            </motion.div>
           )}
-        </div>
-
-        <div className="mt-4 flex justify-end items-center gap-2 p-4 bg-primary/5 rounded-2xl border border-primary/10">
-          <p className="text-sm md:text-md text-muted-foreground font-medium italic">Total da Encomenda:</p>
-          <p className="text-xl md:text-2xl font-bold text-primary">
-            R$ {getSubtotal().toFixed(2).replace(".", ",")}
-          </p>
-        </div>
+        </AnimatePresence>
       </div>
 
-      <div>
-        <h2 className="text-2xl font-display font-semibold mb-6 border-b pb-2">Passo 2: Seus Dados</h2>
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div className="space-y-3">
-            <Label htmlFor="customerName" className="font-medium">Nome Completo <span className="text-red-500">*</span></Label>
-            <Input id="customerName" name="customerName" placeholder="Ex: Maria Antonieta" required className="h-12 cursor-text" />
-          </div>
-          <div className="space-y-3">
-            <Label htmlFor="customerEmail" className="font-medium">E-mail <span className="text-red-500">*</span></Label>
-            <Input id="customerEmail" name="customerEmail" type="email" placeholder="maria@exemplo.com" required className="h-12 cursor-text" />
-          </div>
-          <div className="space-y-3">
-            <Label htmlFor="customerPhone" className="font-medium">Telefone / WhatsApp</Label>
-            <Input id="customerPhone" name="customerPhone" type="tel" placeholder="(51) 99999-9999" className="h-12 cursor-text" />
-          </div>
-          <div className="space-y-3 sm:col-span-2">
-            <Label htmlFor="notes" className="font-medium">Instruções Especiais ou Observações</Label>
-            <textarea
-              id="notes"
-              name="notes"
-              className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 cursor-text resize-none"
-              placeholder="Ex: Alergia a nozes, entrega pela manhã, sem açúcar na cobertura..."
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end pt-4">
-        <Button
-          type="submit"
-          size="lg"
-          disabled={loading || getSubtotal() === 0}
-          className="h-14 px-8 text-lg font-medium w-full sm:w-auto rounded-xl cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-        >
-          {loading ? "Enviando..." : "Finalizar Encomenda"}
-        </Button>
-      </div>
-    </form >
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(var(--primary), 0.15);
+          border-radius: 40px;
+          border: 2px solid transparent;
+          background-clip: content-box;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(var(--primary), 0.4);
+          background-clip: content-box;
+        }
+        body {
+          overflow-x: hidden;
+          width: 100vw;
+        }
+        html {
+          overflow-x: hidden;
+          width: 100vw;
+        }
+      `}</style>
+    </div>
   );
 }
 
 export default function OrderForm({ initialProducts }: { initialProducts: ProductDTO[] }) {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center p-20"><p className="text-muted-foreground">Carregando formulário...</p></div>}>
+    <Suspense fallback={<div className="flex flex-col items-center justify-center min-h-screen space-y-8 bg-background">
+      <motion.div 
+        animate={{ 
+          rotate: 360,
+          scale: [1, 1.1, 1],
+          borderRadius: ["30%", "50%", "30%"]
+        }} 
+        transition={{ 
+          rotate: { repeat: Infinity, duration: 2, ease: "linear" },
+          scale: { repeat: Infinity, duration: 1.5 },
+          borderRadius: { repeat: Infinity, duration: 2 }
+        }} 
+        className="h-24 w-24 border-8 border-primary/10 border-t-primary shadow-2xl shadow-primary/20" 
+      />
+      <div className="text-center space-y-2">
+        <p className="text-primary font-display text-4xl font-bold italic tracking-tight animate-pulse">Raízes do Sul</p>
+        <p className="text-muted-foreground font-bold uppercase tracking-[0.4em] text-xs">Artesanal & Tradição</p>
+      </div>
+    </div>}>
       <OrderFormContent initialProducts={initialProducts} />
     </Suspense>
   );

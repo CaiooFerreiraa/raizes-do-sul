@@ -44,20 +44,9 @@ export default async function EncomendaPage() {
     : MOCK_PRODUCTS;
 
   return (
-    <div className="flex flex-col min-h-screen bg-secondary/10">
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8">
-        <div className="mb-8 p-4 text-center">
-          <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight text-foreground mb-4">
-            Faça sua Encomenda
-          </h1>
-          <p className="text-muted-foreground md:text-lg">
-            Selecione os produtos desejados e preencha seus dados. Entraremos em contato com você para confirmar os detalhes e previsão de entrega.
-          </p>
-        </div>
-
-        <section className="bg-background rounded-3xl shadow-sm border border-border p-6 md:p-10">
-          <OrderForm initialProducts={JSON.parse(JSON.stringify(products))} />
-        </section>
+    <div className="flex flex-col min-h-screen bg-background w-full">
+      <main className="flex-1 w-full flex flex-col">
+        <OrderForm initialProducts={JSON.parse(JSON.stringify(products))} />
       </main>
     </div>
   );

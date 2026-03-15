@@ -76,8 +76,57 @@ export default async function AdminDashboard() {
     topItems = [];
   }
 
+  // Daily summary logic
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const tomorrowDate = new Date(todayDate);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const dayAfterTomorrow = new Date(tomorrowDate);
+  dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+
+  // Daily summary logic with fallback for potential Prisma Client sync issues
+  let [ordersToday, ordersTomorrow, pendingOrders, completedOrders] = [0, 0, 0, 0];
+  
+  try {
+    const counts = await Promise.all([
+      prisma.order.count({ where: { scheduledDate: { gte: todayDate, lt: tomorrowDate } } as any }),
+      prisma.order.count({ where: { scheduledDate: { gte: tomorrowDate, lt: dayAfterTomorrow } } as any }),
+      prisma.order.count({ where: { status: { in: ["RECEIVED", "CONFIRMED", "PRODUCTION", "PENDING"] } } }),
+      prisma.order.count({ where: { status: { in: ["DELIVERED", "COMPLETED"] } } }),
+    ]);
+    [ordersToday, ordersTomorrow, pendingOrders, completedOrders] = counts;
+  } catch (error) {
+    console.error("Erro ao carregar resumo operacional:", error);
+    // Fallback to basic counts without date filtering if scheduledDate is unknown
+    try {
+      pendingOrders = await prisma.order.count({ where: { status: { in: ["RECEIVED", "CONFIRMED", "PRODUCTION", "PENDING"] } } });
+      completedOrders = await prisma.order.count({ where: { status: { in: ["DELIVERED", "COMPLETED"] } } });
+    } catch (e) {
+      console.error("Erro no fallback de contagem:", e);
+    }
+  }
+
   return (
     <div className="space-y-12 max-w-6xl mx-auto">
+      {/* Resumo Operacional */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {[
+          { label: "Hoje", count: ordersToday, color: "bg-primary" },
+          { label: "Amanhã", count: ordersTomorrow, color: "bg-blue-500" },
+          { label: "Pendentes", count: pendingOrders, color: "bg-amber-500" },
+          { label: "Concluídos", count: completedOrders, color: "bg-green-500" }
+        ].map((item) => (
+          <div key={item.label} className="bg-card border border-border/40 rounded-3xl p-6 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{item.label}</p>
+              <p className="text-3xl font-bold mt-1">{item.count}</p>
+            </div>
+            <div className={`h-10 w-10 rounded-2xl ${item.color} flex items-center justify-center text-white font-bold opacity-20`}>
+              {item.label[0]}
+            </div>
+          </div>
+        ))}
+      </div>
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="font-display text-4xl sm:text-6xl font-bold text-foreground">Dashboard</h1>

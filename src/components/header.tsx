@@ -39,17 +39,6 @@ export function Header() {
             Encomendas
           </span>
         </Link>
-        <Link
-          className="group flex flex-col items-center gap-1 text-sm font-medium transition-all hover:text-primary cursor-pointer"
-          href="/login"
-        >
-          <div className="p-2.5 rounded-xl bg-secondary/30 group-hover:bg-primary/10 group-hover:scale-110 transition-all border border-transparent group-hover:border-primary/20">
-            <User className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
-          </div>
-          <span className="text-[10px] uppercase tracking-widest font-bold opacity-70 group-hover:opacity-100">
-            Admin
-          </span>
-        </Link>
       </nav>
 
       {/* Mobile Navigation (Hamburger) */}
@@ -77,17 +66,6 @@ export function Header() {
                     className="text-lg font-medium py-2 border-b border-border/50 hover:text-primary transition-colors"
                   >
                     Fazer Encomenda
-                  </Link>
-                }
-              />
-              <SheetClose
-                nativeButton={false}
-                render={
-                  <Link
-                    href="/login"
-                    className="text-lg font-medium py-2 border-b border-border/50 hover:text-primary transition-colors"
-                  >
-                    Área do Admin
                   </Link>
                 }
               />

@@ -14,6 +14,16 @@ interface CreateOrderInput {
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
+  deliveryType: string;
+  pickupPoint?: string;
+  street?: string;
+  number?: string;
+  neighborhood?: string;
+  reference?: string;
+  paymentMethod: string;
+  paymentStatus?: string;
+  scheduledDate?: string; // ISO string
+  scheduledTime?: string;
   notes?: string;
   items: OrderItemInput[];
 }
@@ -29,36 +39,47 @@ export async function createOrder(data: CreateOrderInput) {
       0
     );
 
+    // Create order items first to map them correctly
+    const orderItems = await Promise.all(
+      data.items.map(async (item: any) => {
+        let dbProduct: { id: string } | null = null;
+        if (item.productId && item.productId.length > 5) {
+          dbProduct = await prisma.product.findUnique({
+            where: { id: item.productId },
+          });
+        }
+
+        return {
+          productId: dbProduct ? dbProduct.id : null,
+          productName: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        };
+      })
+    );
+
     const order = await prisma.order.create({
       data: {
         customerName: data.customerName,
         customerEmail: data.customerEmail,
         customerPhone: data.customerPhone || null,
+        deliveryType: data.deliveryType,
+        pickupPoint: data.pickupPoint || null,
+        street: data.street || null,
+        number: data.number || null,
+        neighborhood: data.neighborhood || null,
+        reference: data.reference || null,
+        paymentMethod: data.paymentMethod,
+        paymentStatus: data.paymentStatus || "PENDING",
+        scheduledDate: data.scheduledDate ? new Date(data.scheduledDate) : null,
+        scheduledTime: data.scheduledTime || null,
         notes: data.notes || null,
         total,
         status: "PENDING",
         items: {
-          create: await Promise.all(
-            data.items.map(async (item: any) => {
-              // Try to find if product exists in DB (not a mock ID)
-              let dbProduct: { id: string } | null = null;
-              if (item.productId && item.productId.length > 5) {
-                dbProduct = await prisma.product.findUnique({
-                  where: { id: item.productId },
-                });
-              }
-
-              // Use unchecked create format to avoid 'product' relation requirement if types lag
-              return {
-                productId: dbProduct ? dbProduct.id : null,
-                productName: item.name,
-                quantity: item.quantity,
-                price: item.price,
-              };
-            })
-          ) as Parameters<typeof prisma.orderItem.create>[0]["data"][],
+          create: orderItems,
         },
-      },
+      } as any,
     });
 
     revalidatePath("/admin/pedidos");
