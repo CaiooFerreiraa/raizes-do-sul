@@ -86,16 +86,17 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (session?.user) {
+    const user = session?.user;
+    if (user) {
       setOrderDetails(prev => ({
         ...prev,
-        customerName: session.user.name || "",
-        customerEmail: session.user.email || "",
-        customerPhone: session.user.phone || "",
-        street: session.user.street || "",
-        number: session.user.number || "",
-        neighborhood: session.user.neighborhood || "",
-        reference: session.user.reference || "",
+        customerName: user.name || "",
+        customerEmail: user.email || "",
+        customerPhone: user.phone || "",
+        street: user.street || "",
+        number: user.number || "",
+        neighborhood: user.neighborhood || "",
+        reference: user.reference || "",
       }));
     }
   }, [session]);
