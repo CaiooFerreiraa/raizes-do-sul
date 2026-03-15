@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 interface OrderItemInput {
   productId: string;
-  name: string; // Add name to handle mock products
+  name: string; 
   quantity: number;
   price: number;
 }

@@ -16,32 +16,19 @@ export const metadata = {
 
 export const revalidate = 60; // Revalidate at most every 60 seconds
 
-const MOCK_PRODUCTS: ProductDTO[] = [
-  { id: "1", name: "Bolo de Cenoura", price: "35.00", description: "Com calda de chocolate belga.", imageUrl: null },
-  { id: "2", name: "Pão de Campanha", price: "22.00", description: "Fermentação natural 24h.", imageUrl: null },
-  { id: "3", name: "Focaccia de Alecrim", price: "18.00", description: "Azeite extravirgem e flor de sal.", imageUrl: null },
-  { id: "4", name: "Pasta Fresca (500g)", price: "25.00", description: "Feita com ovos caipiras.", imageUrl: null },
-  { id: "5", name: "Bolo de Milho", price: "30.00", description: "Receita tradicional da vovó.", imageUrl: null },
-  { id: "6", name: "Pão de Milho", price: "15.00", description: "Macio e quentinho.", imageUrl: null },
-  { id: "7", name: "Torta de Maçã", price: "45.00", description: "Com canela e crosta crocante.", imageUrl: null },
-  { id: "8", name: "Gnocchi de Batata", price: "28.00", description: "Massa leve e artesanal.", imageUrl: null },
-];
-
 export default async function EncomendaPage() {
   const dbProducts = await prisma.product.findMany({
     where: { isAvailable: true },
     orderBy: { name: "asc" },
   });
 
-  const products: ProductDTO[] = dbProducts.length > 0
-    ? dbProducts.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      price: p.price.toString(),
-      imageUrl: p.imageUrl,
-    }))
-    : MOCK_PRODUCTS;
+  const products: ProductDTO[] = dbProducts.map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    price: p.price.toString(),
+    imageUrl: p.imageUrl,
+  }));
 
   return (
     <div className="flex flex-col min-h-screen bg-background w-full">

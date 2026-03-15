@@ -15,8 +15,8 @@ const display = DM_Serif_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Raízes do Sul | Massas & Bolos Artesanais",
-  description: "Tradição e sabor em cada fatia. Encomende massas e doces artesanais preparados com receitas de família.",
+  title: "Raízes do Sul | Massas Artesanais",
+  description: "Tradição e sabor em cada fatia. Encomende massas artesanais preparadas com receitas de família.",
   icons: {
     icon: [
       { url: "/logo.webp" },
