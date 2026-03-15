@@ -163,3 +163,4 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - [2026-03-15] UX — Melhoria na hierarquia visual e espaçamento de todas as seções principais da aplicação, eliminando a sensação de "bagunça" e amadurecendo a interface.
 - [2026-03-15] Branding — Remoção completa do termo "Boutique" e ajuste de localização genérica conforme as especificações reais do negócio.
 - [2026-03-15] Design — Redução adicional na tipografia principal do Hero para melhorar o respiro e aumento da transparência do logo de fundo para maior destaque visual.
+- [2026-03-15] Auth Fix — Corrigido bug de sessão que não atualizava o Header após login sem F5. Removido `redirectTo` da server action `loginAction` e substituído por `redirect: false` + retorno de `{ success: true }`. O cliente agora usa `router.push("/")` + `router.refresh()` para navegar e forçar a re-hidratação da sessão no `SessionProvider`.

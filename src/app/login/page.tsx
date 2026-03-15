@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -22,6 +24,10 @@ export default function LoginPage() {
       if (res?.error) {
         setError(res.error);
         setLoading(false);
+      } else {
+        // Login bem-sucedido: navega pelo cliente para forçar re-hidratação da sessão
+        router.push("/");
+        router.refresh();
       }
     } catch (e) {
       console.error(e);
