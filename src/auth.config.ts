@@ -1,5 +1,9 @@
 import type { NextAuthConfig } from "next-auth";
 
+/**
+ * Consolidação de tipos para NextAuth v5.
+ * Aumentamos o módulo 'next-auth' diretamente para Session e User.
+ */
 declare module "next-auth" {
   interface Session {
     user: {
@@ -16,6 +20,7 @@ declare module "next-auth" {
   }
 
   interface User {
+    id?: string;
     phone?: string | null;
     street?: string | null;
     number?: string | null;
@@ -31,13 +36,10 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      
       const isPublicPage = ["/login", "/register"].includes(nextUrl.pathname);
-      const isLandingPage = nextUrl.pathname === "/";
-      const isLoja = nextUrl.pathname.startsWith("/loja");
-      const isEncomenda = nextUrl.pathname.startsWith("/encomenda");
-      const isAcompanhar = nextUrl.pathname.startsWith("/acompanhar");
+      const isPublicFeature = nextUrl.pathname === "/" || nextUrl.pathname.startsWith("/loja");
 
-      // Redirecionar se já estiver logado e tentar acessar login/register
       if (isPublicPage) {
         if (isLoggedIn) {
           return Response.redirect(new URL("/", nextUrl));
@@ -45,34 +47,39 @@ export const authConfig = {
         return true;
       }
 
-      // Proteger Admin
+      if (isPublicFeature) return true;
+      if (!isLoggedIn) return false;
+      
       if (nextUrl.pathname.startsWith("/admin")) {
-        const isAdmin = auth?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
-        return isLoggedIn && isAdmin;
+        const isAdmin = auth?.user?.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase().trim();
+        return isAdmin;
       }
 
-      // Proteger Perfil
-      if (nextUrl.pathname.startsWith("/perfil")) {
-        return isLoggedIn;
-      }
-
-      // Todas as outras páginas são públicas (Home, Encomenda, Loja, Acompanhar)
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.id = user.id;
-        token.phone = user.phone;
-        token.street = user.street;
-        token.number = user.number;
-        token.neighborhood = user.neighborhood;
-        token.reference = user.reference;
+        token.id = user.id as string;
+        token.name = user.name;
+        token.email = user.email;
+        token.phone = (user as any).phone;
+        token.street = (user as any).street;
+        token.number = (user as any).number;
+        token.neighborhood = (user as any).neighborhood;
+        token.reference = (user as any).reference;
       }
+      
+      if (trigger === "update" && session) {
+        return { ...token, ...session.user };
+      }
+
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any, token: any }) {
       if (token && session.user) {
         session.user.id = token.id as string;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
         session.user.phone = token.phone as string;
         session.user.street = token.street as string;
         session.user.number = token.number as string;
@@ -82,5 +89,5 @@ export const authConfig = {
       return session;
     },
   },
-  providers: [], // Providers are added in auth.ts
+  providers: [],
 } satisfies NextAuthConfig;

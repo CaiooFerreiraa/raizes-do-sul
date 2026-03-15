@@ -108,6 +108,42 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - Card de resumo centralizado com tipografia de subtotal ampliada (`text-5xl`).
 - Layout do checkout em fluxo centralizado para melhor hierarquia visual.
 
+### Componentes - K - v4
+**Data:** 2026-03-15
+**Motivo:** Refatoração do Header e Dashboard.
+- Header unificado: removidos links redundantes, integrado menu de usuário com avatar.
+- Dashboard Admin: resumo operacional com cards dinâmicos e tipografia premium.
+- Lógica de autenticação integrada à UI para ocultar botões de login quando logado.
+
+### Tema Completo - TC - v3
+**Data:** 2026-03-15
+**Motivo:** Overhaul Visual Final (Home & Admin).
+- Hero section redesenhada com tipografia display escalonada e animações de entrada.
+- Grid de produtos em destaque com cards de "boutique" (radius acentuado, sombras suaves).
+- Rodapé refinado com grid de navegação e informações de contato.
+- Aplicação de `backdrop-blur` e `glassmorphism` em elementos flutuantes.
+
+### Revisão Visual - TC - v4
+**Data:** 2026-03-15
+**Motivo:** Ajuste de escala e visibilidade (Feedback do Usuário).
+- Reduzida a escala da tipografia do Hero (de `9xl` para `8xl`) para melhor equilíbrio.
+- Aumentada a opacidade do logo de fundo (de `0.03` para `0.12`) e removido blur para maior clareza.
+- Reduzido o tamanho da descrição no Hero para aumentar o respiro visual.
+
+### Ajuste de Branding - TC - v5
+**Data:** 2026-03-15
+**Motivo:** Reposicionamento de marca (não é boutique).
+- Remoção do termo "Boutique" de descrições, footer e copyright.
+- Substituição por "Massas Artesanais" e "Produção Artesanal".
+- Correção de endereço para "RS - Brasil".
+
+### Revisão Hero - TC - v6
+**Data:** 2026-03-15
+**Motivo:** Refinamento de leitura e visibilidade da marca d'água (Feedback do Usuário).
+- Título principal reduzido (agora vai até `7xl` em telas grandes, antes `8xl`).
+- Descrição reduzida e mais compacta (agora `max-w-lg` e texto text-base a text-lg).
+- Aumentada a opacidade do logo de background (de `0.12` para `0.18`).
+
 ---
 
 ## Histórico de Decisões
@@ -122,9 +158,8 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - [2026-03-15] Interface — Criação da página pública de acompanhamento e tracking da encomenda pelo cliente (`/acompanhar/[id]`) com linha do tempo animada (Framer Motion).
 - [2026-03-15] Auth — Implementação do `AuthProvider` (SessionProvider) e integração do estado de login no `Header` e `AdminLayout`.
 - [2026-03-15] Arquitetura — Centralização de todas as Server Actions em `src/actions/` e proteção de rotas administrativas via checagem de sessão nas actions e no layout.
-- [2026-03-15] Design — Redesign da seção Hero para melhorar o respiro em dispositivos móveis, empilhando botões e ajustando tipografia.
-- [2026-03-15] Auth — Implementação de `middleware.ts` para proteção global de todo o site (exceto login/api) com redirecionamento automático.
-- [2026-03-15] Interface — Integração de menu de usuário completo no `Header` com suporte a logout e perfil, unificando a experiência de sessão em todo o site.
-- [2026-03-15] Segurança — Restrição de acesso às rotas administrativas (`/admin/*`) baseada no email definido na variável `NEXT_PUBLIC_ADMIN_EMAIL` no arquivo `.env`. Cabeçário das variáveis Next.js (`NEXT_PUBLIC_`) revisado.
-- [2026-03-15] Interface — Adição da métrica "Pagamentos Pendentes" no dashboard admin e botão de retorno rápido ao site público.
-- [2026-03-15] Feature — Implementação de redirecionamento automático para WhatsApp com resumo do pedido detalhado e aviso de frete variável para entregas.
+- [2026-03-15] Interface — Redesign completo do Header, unificando navegação desktop e mobile, e garantindo que o botão de login seja substituído pelo avatar do usuário logado.
+- [2026-03-15] Design — Overhaul visual da página inicial (Home) e Dashboard Admin para uma estética de "Boutique Artesanal Premium", com animações Framer Motion e tipografia display impactante.
+- [2026-03-15] UX — Melhoria na hierarquia visual e espaçamento de todas as seções principais da aplicação, eliminando a sensação de "bagunça" e amadurecendo a interface.
+- [2026-03-15] Branding — Remoção completa do termo "Boutique" e ajuste de localização genérica conforme as especificações reais do negócio.
+- [2026-03-15] Design — Redução adicional na tipografia principal do Hero para melhorar o respiro e aumento da transparência do logo de fundo para maior destaque visual.

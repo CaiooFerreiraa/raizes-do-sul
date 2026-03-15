@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/actions/auth";
 import { Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { SidebarNav } from "@/components/admin/sidebar-nav";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -16,20 +17,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect("/");
   }
 
-  const NavLinks = () => (
-    <nav className="space-y-3">
-      <Link href="/admin" className="block p-4 rounded-2xl bg-card shadow-sm border border-border/50 font-medium text-primary cursor-pointer hover:bg-secondary/40 transition-colors">
-        <span className="font-display text-lg">Painel</span>
-      </Link>
-      <Link href="/admin/produtos" className="block p-4 rounded-2xl font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors cursor-pointer">
-        <span className="font-display text-lg">Produtos</span>
-      </Link>
-      <Link href="/admin/pedidos" className="block p-4 rounded-2xl font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors cursor-pointer">
-        <span className="font-display text-lg">Encomendas</span>
-      </Link>
-    </nav>
-  );
-
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar Desktop */}
@@ -38,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/" className="font-display text-3xl font-bold cursor-pointer hover:text-primary transition-colors block text-center text-foreground">
             Admin.
           </Link>
-          <NavLinks />
+          <SidebarNav />
         </div>
 
         <div className="space-y-6">
@@ -90,7 +77,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                   </div>
                 </div>
                 
-                <NavLinks />
+                <SidebarNav />
               </div>
               
               <form action={logoutAction} className="mt-auto pt-6 border-t border-border/50">

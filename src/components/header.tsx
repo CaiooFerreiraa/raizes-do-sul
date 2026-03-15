@@ -5,7 +5,7 @@ import Image from "next/image";
 import * as React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, ShoppingBag, User, PackageSearch, LayoutDashboard } from "lucide-react";
+import { Menu, ShoppingBag, User, PackageSearch, LayoutDashboard, ChevronRight } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { useSession } from "next-auth/react";
 import { logoutAction } from "@/actions/auth";
@@ -22,11 +22,15 @@ import {
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const isLoading = status === "loading";
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Admin check
+  const isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   return (
     <header className="px-4 md:px-6 h-20 md:h-24 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
@@ -46,85 +50,110 @@ export function Header() {
 
       {/* Desktop Navigation */}
       <nav className="hidden md:flex items-center gap-8">
-        <Link
-          className="group flex flex-col items-center gap-1 text-sm font-medium transition-all hover:text-primary cursor-pointer"
-          href="/encomenda"
-        >
-          <div className="p-2.5 rounded-xl bg-primary/5 group-hover:bg-primary/10 group-hover:scale-110 transition-all border border-transparent group-hover:border-primary/20">
-            <ShoppingBag className="h-5 w-5 text-primary" />
-          </div>
-          <span className="text-[10px] uppercase tracking-widest font-bold opacity-70 group-hover:opacity-100">
-            Encomendas
-          </span>
-        </Link>
-        <Link
-          className="group flex flex-col items-center gap-1 text-sm font-medium transition-all hover:text-primary cursor-pointer"
-          href="/acompanhar"
-        >
-          <div className="p-2.5 rounded-xl bg-primary/5 group-hover:bg-primary/10 group-hover:scale-110 transition-all border border-transparent group-hover:border-primary/20">
-            <PackageSearch className="h-5 w-5 text-primary" />
-          </div>
-          <span className="text-[10px] uppercase tracking-widest font-bold opacity-70 group-hover:opacity-100">
-            Acompanhar
-          </span>
-        </Link>
-        
-        {mounted && session && session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
+        <div className="flex items-center gap-8 pr-8">
           <Link
             className="group flex flex-col items-center gap-1 text-sm font-medium transition-all hover:text-primary cursor-pointer"
-            href="/admin"
+            href="/encomenda"
           >
             <div className="p-2.5 rounded-xl bg-primary/5 group-hover:bg-primary/10 group-hover:scale-110 transition-all border border-transparent group-hover:border-primary/20">
-              <LayoutDashboard className="h-5 w-5 text-primary" />
+              <ShoppingBag className="h-5 w-5 text-primary" />
             </div>
             <span className="text-[10px] uppercase tracking-widest font-bold opacity-70 group-hover:opacity-100">
-              Admin
+              Encomendas
             </span>
           </Link>
-        )}
+          <Link
+            className="group flex flex-col items-center gap-1 text-sm font-medium transition-all hover:text-primary cursor-pointer"
+            href="/acompanhar"
+          >
+            <div className="p-2.5 rounded-xl bg-primary/5 group-hover:bg-primary/10 group-hover:scale-110 transition-all border border-transparent group-hover:border-primary/20">
+              <PackageSearch className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-[10px] uppercase tracking-widest font-bold opacity-70 group-hover:opacity-100">
+              Acompanhar
+            </span>
+          </Link>
+          
+          {mounted && session && isAdmin && (
+            <Link
+              className="group flex flex-col items-center gap-1 text-sm font-medium transition-all hover:text-primary cursor-pointer"
+              href="/admin"
+            >
+              <div className="p-2.5 rounded-xl bg-primary/5 group-hover:bg-primary/10 group-hover:scale-110 transition-all border border-transparent group-hover:border-primary/20">
+                <LayoutDashboard className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-[10px] uppercase tracking-widest font-bold opacity-70 group-hover:opacity-100">
+                Admin
+              </span>
+            </Link>
+          )}
+        </div>
 
-        {mounted && session && (
-          <div className="flex items-center gap-4 pl-4 border-l border-border/50">
+        {mounted && !isLoading && (
+          <div className="flex items-center gap-4 pl-8 border-l border-border/50">
+            {!session ? (
+              <Link href="/login">
+                <Button 
+                  variant="ghost" 
+                  className="h-10 px-8 rounded-full bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary font-bold text-[10px] uppercase tracking-[0.15em] cursor-pointer transition-all"
+                >
+                  Log In
+                </Button>
+              </Link>
+            ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
-                    <Button variant="ghost" className="relative h-10 w-10 rounded-full bg-primary/5 hover:bg-primary/10 border border-primary/20 p-0 overflow-hidden cursor-pointer">
+                    <Button variant="ghost" className="relative h-12 w-12 rounded-full bg-primary/5 hover:bg-primary/10 border border-primary/20 p-0 overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all">
                       {session.user?.image ? (
                         <Image src={session.user.image} alt={session.user.name || "User"} fill className="object-cover" />
                       ) : (
-                        <span className="text-primary font-bold text-sm">
+                        <span className="text-primary font-bold text-base">
                           {session.user?.name?.[0]?.toUpperCase() || "U"}
                         </span>
                       )}
                     </Button>
                   }
                 />
-                <DropdownMenuContent align="end" className="w-[200px] rounded-2xl p-2 shadow-xl border-border/50 bg-background">
+                <DropdownMenuContent align="end" className="w-[240px] rounded-[2rem] p-3 shadow-2xl border-border/30 bg-background/95 backdrop-blur-md mt-2">
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel className="font-display font-medium px-3 py-2">
-                      <p className="text-sm font-bold truncate">{session.user?.name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate font-normal">{session.user?.email}</p>
+                    <DropdownMenuLabel className="font-display px-4 py-3">
+                      <p className="text-base font-bold text-primary truncate">{session.user?.name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate font-bold uppercase tracking-wider">{session.user?.email}</p>
                     </DropdownMenuLabel>
                   </DropdownMenuGroup>
-                  <DropdownMenuSeparator className="bg-border/50" />
+                  <DropdownMenuSeparator className="bg-border/30 my-2" />
                   <DropdownMenuItem 
                     render={
-                      <Link href="/perfil" className="flex items-center gap-2 w-full">
+                      <Link href="/perfil" className="flex items-center gap-3 w-full">
                         <User className="h-4 w-4" />
                         Meu Perfil
                       </Link>
                     }
-                    className="cursor-pointer rounded-xl focus:bg-primary/5 focus:text-primary transition-colors py-2.5"
+                    className="cursor-pointer rounded-2xl focus:bg-primary/5 focus:text-primary transition-colors py-3 px-4 font-medium"
                   />
+                  {isAdmin && (
+                    <DropdownMenuItem 
+                      render={
+                        <Link href="/admin" className="flex items-center gap-3 w-full">
+                          <LayoutDashboard className="h-4 w-4" />
+                          Painel Administrativo
+                        </Link>
+                      }
+                      className="cursor-pointer rounded-2xl focus:bg-primary/5 focus:text-primary transition-colors py-3 px-4 font-medium"
+                    />
+                  )}
+                  <DropdownMenuSeparator className="bg-border/30 my-2" />
                   <DropdownMenuItem 
-                    className="cursor-pointer rounded-xl focus:bg-destructive/5 focus:text-destructive transition-colors py-2.5 text-muted-foreground"
+                    className="cursor-pointer rounded-2xl focus:bg-destructive/5 focus:text-destructive transition-colors py-3 px-4 text-muted-foreground font-medium"
                     onClick={() => logoutAction()}
                   >
-                    Sair da Conta
+                    Encerrar Sessão
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            )}
+          </div>
         )}
       </nav>
 
@@ -140,98 +169,82 @@ export function Header() {
               </Button>
             }
           />
-          <SheetContent side="right" className="w-[85%] flex flex-col p-6">
-            <SheetHeader className="text-left border-b pb-4 mb-4">
-              <SheetTitle className="font-display text-2xl text-primary font-bold">Menu</SheetTitle>
+          <SheetContent side="right" className="w-[85%] flex flex-col p-8 border-l-primary/10">
+            <SheetHeader className="text-left border-b border-border/30 pb-6 mb-2">
+              <SheetTitle className="font-display text-3xl text-primary font-bold">Navegação</SheetTitle>
             </SheetHeader>
-            <nav className="flex flex-col gap-6">
-              <SheetClose
-                nativeButton={false}
-                render={
-                  <Link
-                    href="/encomenda"
-                    className="text-lg font-medium py-2 border-b border-border/50 hover:text-primary transition-colors"
-                  >
-                    Fazer Encomenda
-                  </Link>
-                }
-              />
-              <SheetClose
-                nativeButton={false}
-                render={
-                  <Link
-                    href="/acompanhar"
-                    className="text-lg font-medium py-2 border-b border-border/50 hover:text-primary transition-colors"
-                  >
-                    Acompanhar Pedido
-                  </Link>
-                }
-              />
-              {mounted && session && session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
+            <nav className="flex flex-col gap-2">
+              {[
+                { label: "Fazer Encomenda", href: "/encomenda", icon: ShoppingBag },
+                { label: "Acompanhar Pedido", href: "/acompanhar", icon: PackageSearch },
+                { label: "Início", href: "/", icon: null }
+              ].map((item) => (
                 <SheetClose
+                  key={item.href}
                   nativeButton={false}
                   render={
                     <Link
-                      href="/admin"
-                      className="text-lg font-medium py-2 border-b border-border/50 hover:text-primary transition-colors flex items-center gap-2"
+                      href={item.href}
+                      className="text-lg font-bold py-4 border-b border-border/20 hover:text-primary transition-colors flex items-center justify-between group"
                     >
-                      <LayoutDashboard className="h-5 w-5" />
-                      Painel Admin
+                      <span>{item.label}</span>
+                      <ChevronRight size={18} className="opacity-0 group-hover:opacity-100 transition-all text-primary" />
                     </Link>
                   }
                 />
-              )}
-              {mounted && session && (
-                <SheetClose
-                  nativeButton={false}
-                  render={
-                    <Link
-                      href="/perfil"
-                      className="text-lg font-medium py-2 border-b border-border/50 hover:text-primary transition-colors flex items-center gap-2"
-                    >
-                      <User className="h-5 w-5" />
-                      Meu Perfil
-                    </Link>
-                  }
-                />
-              )}
-              <SheetClose
-                nativeButton={false}
-                render={
-                  <Link
-                    href="/"
-                    className="text-lg font-medium py-2 border-b border-border/50 hover:text-primary transition-colors"
-                  >
-                    Início
-                  </Link>
-                }
-              />
+              ))}
             </nav>
 
-            {mounted && session && (
-              <div className="mt-auto space-y-4 pt-6">
-                <div className="p-4 rounded-3xl bg-primary/5 border border-primary/10 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/20">
-                    {session.user?.name?.[0]?.toUpperCase() || "U"}
+            {mounted && !isLoading && (
+              <div className="mt-auto space-y-6">
+                {!session ? (
+                  <Link href="/login" className="w-full block">
+                    <Button 
+                      className="w-full h-16 rounded-[1.5rem] font-bold uppercase tracking-widest cursor-pointer shadow-xl shadow-primary/10 transition-all active:scale-95 bg-primary hover:bg-primary/90 text-primary-foreground text-sm"
+                    >
+                      Acessar Conta
+                    </Button>
+                  </Link>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-5 rounded-[2rem] bg-primary/5 border border-primary/10 flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl border border-primary/20">
+                        {session.user?.name?.[0]?.toUpperCase() || "U"}
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="font-bold truncate text-primary leading-tight">{session.user?.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate font-bold uppercase tracking-wider">{session.user?.email}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                       <SheetClose nativeButton={false} render={
+                         <Link href="/perfil" className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-secondary/30 text-[10px] font-bold uppercase tracking-widest text-primary">
+                           <User size={14} /> Perfil
+                         </Link>
+                       } />
+                       <Button 
+                        onClick={() => logoutAction()}
+                        variant="ghost" 
+                        className="flex items-center justify-center gap-2 h-14 rounded-2xl border border-destructive/20 text-destructive text-[10px] font-bold uppercase tracking-widest hover:bg-destructive/5"
+                      >
+                        Sair
+                      </Button>
+                    </div>
+                    {isAdmin && (
+                      <SheetClose nativeButton={false} render={
+                        <Link href="/admin" className="flex items-center justify-center gap-2 h-14 rounded-2xl bg-primary text-white text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-primary/10">
+                          <LayoutDashboard size={14} /> Painel Admin
+                        </Link>
+                      } />
+                    )}
                   </div>
-                  <div className="overflow-hidden">
-                    <p className="font-bold truncate text-primary">{session.user?.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{session.user?.email}</p>
-                  </div>
+                )}
+                
+                <div className="text-center pt-2">
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground/40 font-bold italic">© 2026 Raízes do Sul — Massas Artesanais</p>
                 </div>
-                <Button 
-                  onClick={() => logoutAction()}
-                  variant="destructive" 
-                  className="w-full h-14 rounded-2xl font-bold uppercase tracking-widest cursor-pointer shadow-lg shadow-destructive/10"
-                >
-                  Encerrar Sessão
-                </Button>
               </div>
             )}
-            
-            <div className="mt-6 text-center">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground/40 font-bold">© 2026 Raízes do Sul</p>
-            </div>
           </SheetContent>
         </Sheet>
       </div>

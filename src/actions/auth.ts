@@ -27,7 +27,7 @@ export async function loginAction(formData: FormData) {
 
 export async function registerAction(formData: FormData) {
   const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
+  const email = (formData.get("email") as string).toLowerCase().trim();
   const password = formData.get("password") as string;
   
   // Delivery info

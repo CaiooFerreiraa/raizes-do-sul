@@ -2,8 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { prisma } from "@/infrastructure/database/prisma";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Package, ShoppingBag, BarChart3, Star } from "lucide-react";
-
+import { TrendingUp, Package, ShoppingBag, BarChart3, Star, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface OrderItemWithProduct {
   id: string;
@@ -43,7 +42,7 @@ export default async function AdminDashboard() {
     ? (await prisma.order.aggregate({ _avg: { total: true } }))._avg.total || 0
     : 0;
 
-  // Best selling products - Defensive approach to avoid "Unknown field" errors
+  // Best selling products
   let topItems: TopItem[] = [];
   try {
     const allOrderItems = await prisma.orderItem.findMany({
@@ -57,7 +56,6 @@ export default async function AdminDashboard() {
     }) as unknown as OrderItemWithProduct[];
 
     const productAggregates = allOrderItems.reduce<Record<string, TopItem>>((acc: Record<string, TopItem>, item: OrderItemWithProduct) => {
-      // Use related product name or a generic "Produto" if relation/field is missing
       const name = item.product?.name || item.productName || "Produto";
       const key = item.productId || name;
 
@@ -84,7 +82,6 @@ export default async function AdminDashboard() {
   const dayAfterTomorrow = new Date(tomorrowDate);
   dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
 
-  // Daily summary logic with fallback for potential Prisma Client sync issues
   let [ordersToday, ordersTomorrow, pendingOrders, completedOrders, pendingPayment] = [0, 0, 0, 0, 0];
   
   try {
@@ -98,155 +95,171 @@ export default async function AdminDashboard() {
     [ordersToday, ordersTomorrow, pendingOrders, completedOrders, pendingPayment] = counts;
   } catch (error) {
     console.error("Erro ao carregar resumo operacional:", error);
-    // Fallback to basic counts without date filtering if scheduledDate is unknown
-    try {
-      pendingOrders = await prisma.order.count({ where: { status: { in: ["RECEIVED", "CONFIRMED", "PRODUCTION", "PENDING"] } } });
-      completedOrders = await prisma.order.count({ where: { status: { in: ["DELIVERED", "COMPLETED"] } } });
-      pendingPayment = await prisma.order.count({ where: { paymentStatus: "PENDING" } });
-    } catch (e) {
-      console.error("Erro no fallback de contagem:", e);
-    }
   }
 
   return (
-    <div className="space-y-12 max-w-6xl mx-auto">
-      {/* Resumo Operacional */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div className="space-y-12 max-w-6xl mx-auto py-8">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-8 border-b border-border/20">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-[0.2em] text-[10px]">
+            <Star size={12} className="fill-primary" /> Painel de Controle
+          </div>
+          <h1 className="font-display text-5xl md:text-7xl font-bold text-foreground tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground text-lg max-w-xl">Bem-vindo de volta. Aqui está um resumo da operação artesanal hoje.</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/admin/pedidos">
+            <Button variant="outline" className="rounded-2xl h-14 px-6 border-border/50 hover:bg-primary/5 transition-all group">
+              <ShoppingBag className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+              Gestão de Pedidos
+            </Button>
+          </Link>
+          <Link href="/admin/produtos">
+            <Button className="rounded-2xl h-14 px-6 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Package className="mr-2 h-4 w-4" />
+              Catálogo de Massas
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Operacional Summary - Redesigned */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
-          { label: "Hoje", count: ordersToday, color: "bg-primary" },
-          { label: "Amanhã", count: ordersTomorrow, color: "bg-blue-500" },
-          { label: "Ped. Pendentes", count: pendingOrders, color: "bg-amber-500" },
-          { label: "Pag. Pendentes", count: pendingPayment, color: "bg-red-500" },
-          { label: "Concluídos", count: completedOrders, color: "bg-green-500" }
+          { label: "Hoje", count: ordersToday, icon: Clock, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
+          { label: "Amanhã", count: ordersTomorrow, icon: Star, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+          { label: "Pendentes", count: pendingOrders, icon: AlertCircle, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+          { label: "Pagamentos", count: pendingPayment, icon: ShoppingBag, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
+          { label: "Concluídos", count: completedOrders, icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10", border: "border-green-500/20" }
         ].map((item) => (
-          <div key={item.label} className="bg-card border border-border/40 rounded-3xl p-6 flex items-center justify-between shadow-sm">
+          <div key={item.label} className={`group bg-card border ${item.border} rounded-3xl p-5 flex flex-col items-start justify-between shadow-sm hover:shadow-md transition-all`}>
+            <div className={`h-10 w-10 rounded-2xl ${item.bg} flex items-center justify-center ${item.color} mb-4 group-hover:scale-110 transition-transform`}>
+              <item.icon size={20} />
+            </div>
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{item.label}</p>
-              <p className="text-2xl font-bold mt-1">{item.count}</p>
-            </div>
-            <div className={`h-10 w-10 rounded-2xl ${item.color} flex items-center justify-center text-white font-bold opacity-20`}>
-              {item.label[0]}
+              <p className="text-3xl font-bold mt-1 tabular-nums">{item.count}</p>
             </div>
           </div>
         ))}
       </div>
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="font-display text-4xl sm:text-6xl font-bold text-foreground tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-3 text-lg md:text-xl">Acompanhe o crescimento das Raízes do Sul.</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/">
-            <Button variant="outline" className="rounded-xl h-12 cursor-pointer border-border/50 bg-background/50 backdrop-blur-sm">
-              <Star className="mr-2 h-4 w-4 text-primary" />
-              Ir para Loja
-            </Button>
-          </Link>
-          <Link href="/admin/pedidos">
-            <Button variant="outline" className="rounded-xl h-12 cursor-pointer border-border/50">
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              Ver Pedidos
-            </Button>
-          </Link>
-          <Link href="/admin/produtos">
-            <Button className="rounded-xl h-12 cursor-pointer shadow-lg shadow-primary/20">
-              <Package className="mr-2 h-4 w-4" />
-              Catálogo
-            </Button>
-          </Link>
-        </div>
-      </div>
 
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="rounded-[2rem] border-border/50 bg-gradient-to-br from-background to-secondary/20 shadow-sm border-b-4 border-b-primary/30">
+        <Card className="rounded-[2.5rem] border-border/50 bg-gradient-to-br from-background to-secondary/10 shadow-sm overflow-hidden group">
           <CardHeader className="pb-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-12 h-12 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <TrendingUp className="h-6 w-6" />
+              </div>
+              <span className="text-[10px] font-bold text-primary uppercase bg-primary/5 px-2 py-1 rounded-full">Mensal</span>
             </div>
-            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Vendas no Mês</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Faturamento Mensal</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">R$ {monthlyRevenue.toFixed(2).replace(".", ",")}</p>
-            <CardDescription className="text-xs mt-1">Total acumulado em {now.toLocaleDateString('pt-BR', { month: 'long' })}</CardDescription>
+            <CardDescription className="text-xs mt-2 font-medium">Acumulado em {now.toLocaleDateString('pt-BR', { month: 'long' })}</CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="rounded-[2rem] border-border/50 bg-gradient-to-br from-background to-secondary/20 shadow-sm border-b-4 border-b-blue-500/30">
+        <Card className="rounded-[2.5rem] border-border/50 bg-gradient-to-br from-background to-secondary/10 shadow-sm overflow-hidden group">
           <CardHeader className="pb-2">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center mb-2">
-              <BarChart3 className="h-5 w-5 text-blue-500" />
+             <div className="flex items-center justify-between mb-2">
+              <div className="w-12 h-12 rounded-[1.5rem] bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                <BarChart3 className="h-6 w-6" />
+              </div>
             </div>
-            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Ticket Médio</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Ticket Médio</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-foreground">R$ {Number(averageOrderValue).toFixed(2).replace(".", ",")}</p>
-            <CardDescription className="text-xs mt-1">Média de valor por encomenda</CardDescription>
+            <CardDescription className="text-xs mt-2 font-medium">Média por pedido realizado</CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="rounded-[2rem] border-border/50 bg-gradient-to-br from-background to-secondary/20 shadow-sm border-b-4 border-b-orange-500/30">
+        <Card className="rounded-[2.5rem] border-border/50 bg-gradient-to-br from-background to-secondary/10 shadow-sm overflow-hidden group">
           <CardHeader className="pb-2">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center mb-2">
-              <ShoppingBag className="h-5 w-5 text-orange-500" />
+             <div className="flex items-center justify-between mb-2">
+              <div className="w-12 h-12 rounded-[1.5rem] bg-orange-500/10 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform">
+                <ShoppingBag className="h-6 w-6" />
+              </div>
             </div>
-            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Total Pedidos</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Total Encomendas</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">{ordersCount}</p>
-            <CardDescription className="text-xs mt-1">Encomendas recebidas</CardDescription>
+            <p className="text-3xl font-bold text-foreground tabular-nums">{ordersCount}</p>
+            <CardDescription className="text-xs mt-2 font-medium">Histórico total recebido</CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="rounded-[2rem] border-border/50 bg-gradient-to-br from-background to-secondary/20 shadow-sm border-b-4 border-b-purple-500/30">
+        <Card className="rounded-[2.5rem] border-border/50 bg-gradient-to-br from-background to-secondary/10 shadow-sm overflow-hidden group">
           <CardHeader className="pb-2">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center mb-2">
-              <Star className="h-5 w-5 text-purple-500" />
+             <div className="flex items-center justify-between mb-2">
+              <div className="w-12 h-12 rounded-[1.5rem] bg-purple-500/10 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
+                <Package className="h-6 w-6" />
+              </div>
             </div>
-            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Produtos</CardTitle>
+            <CardTitle className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Itens no Catálogo</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">{productsCount}</p>
-            <CardDescription className="text-xs mt-1">Itens ativos no catálogo</CardDescription>
+            <p className="text-3xl font-bold text-foreground tabular-nums">{productsCount}</p>
+            <CardDescription className="text-xs mt-2 font-medium">Produtos artesanais ativos</CardDescription>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 border border-border/50 bg-card rounded-[2.5rem] p-8 shadow-sm">
-          <h2 className="font-display text-2xl font-bold mb-6 flex items-center">
-            <TrendingUp className="mr-2 h-6 w-6 text-primary" />
+        {/* Performance List */}
+        <div className="lg:col-span-2 border border-border/50 bg-card rounded-[3rem] p-8 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-2 h-full bg-primary/20" />
+          <h2 className="font-display text-2xl font-bold mb-8 flex items-center">
+            <TrendingUp className="mr-3 h-6 w-6 text-primary" />
             Produtos Mais Vendidos
           </h2>
           <div className="space-y-4">
             {topItems.length === 0 ? (
-              <p className="text-muted-foreground italic">Aguardando as primeiras encomendas...</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
+                 <ShoppingBag className="h-10 w-10 text-muted-foreground/20" />
+                 <p className="text-muted-foreground italic text-sm">Aguardando as primeiras encomendas...</p>
+              </div>
             ) : (
               topItems.map((item: TopItem, index: number) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-secondary/10 rounded-2xl border border-transparent hover:border-primary/20 transition-all">
-                  <div className="flex items-center gap-4">
-                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+                <div key={index} className="flex items-center justify-between p-5 bg-secondary/10 rounded-[2rem] border border-transparent hover:border-primary/20 hover:bg-secondary/20 transition-all group">
+                  <div className="flex items-center gap-5">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-2xl bg-background border border-border/50 text-foreground font-bold text-sm shadow-sm group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors">
                       {index + 1}
                     </span>
-                    <span className="font-medium text-foreground">{item.name || "Produto s/ nome"}</span>
+                    <span className="font-bold text-foreground text-lg">{item.name || "Produto s/ nome"}</span>
                   </div>
-                  <span className="text-muted-foreground font-bold">{item.quantity || 0} vendidos</span>
+                  <div className="text-right">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary font-bold text-xs">
+                       {item.quantity || 0} vendidos
+                    </span>
+                  </div>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        <div className="border border-border/50 bg-primary/5 rounded-[2.5rem] p-8 flex flex-col justify-center text-center space-y-4">
-          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
-            <ShoppingBag className="h-8 w-8 text-primary" />
+        {/* CTA Card */}
+        <div className="border border-primary/20 bg-primary/5 rounded-[3rem] p-10 flex flex-col justify-center text-center space-y-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:rotate-12 transition-transform">
+             <Star size={120} />
           </div>
-          <h3 className="font-display text-2xl font-bold text-primary">Pronto para crescer?</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Mantenha seu catálogo atualizado para atrair mais clientes e acompanhe as tendências de sabor aqui!
-          </p>
+          <div className="w-20 h-20 bg-primary/20 rounded-[2rem] flex items-center justify-center mx-auto mb-2 text-primary shadow-inner">
+            <Star className="h-10 w-10 fill-primary" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="font-display text-3xl font-bold text-primary leading-tight">Excelência em cada Massa</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Mantenha o catálogo atualizado para encantar seus clientes com novos ingredientes e edições limitadas da estação.
+            </p>
+          </div>
           <Link href="/admin/produtos">
-            <Button className="w-full h-12 rounded-full mt-4 font-bold cursor-pointer">
-              Novo Produto
+            <Button className="w-full h-14 rounded-2xl mt-4 font-bold text-base uppercase tracking-widest cursor-pointer shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all bg-primary hover:bg-primary/90 text-primary-foreground">
+              Gerenciar Produtos
             </Button>
           </Link>
         </div>
