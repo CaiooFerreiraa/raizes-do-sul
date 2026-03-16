@@ -217,7 +217,27 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
         ? `Vou retirar na ${pickupPoint === 'LOJA' ? 'loja' : 'feira'}`
         : `Entrega em: ${orderDetails.street}, ${orderDetails.number} (${orderDetails.neighborhood})`;
 
-      const message = `Olá, tudo bem? 👋\n\nFiz uma nova encomenda pelo site da *Raízes do Sul* e estou enviando o resumo aqui pra vocês!\n\n*MEU PEDIDO (#${orderId.slice(-6).toUpperCase()})*\n\n*O que eu escolhi:*\n${items.map(i => `• ${i.quantity}x ${i.name} — R$ ${(i.price * i.quantity).toFixed(2).replace('.', ',')}`).join('\n')}\n\n*💰 Total:* R$ ${getSubtotal().toFixed(2).replace('.', ',')}\n*💳 Pagamento:* ${friendlyPayment}\n*📍 Entrega/Retirada:* ${friendlyDelivery}\n\n${orderDetails.notes ? `*📝 Observação:* ${orderDetails.notes}\n\n` : ''}Fico no aguardo da confirmação de vocês para enviar o sinal de 50%. Obrigado! ✨`;
+      const subtotal = getSubtotal();
+      const signalValue = subtotal / 2;
+
+      const message = [
+        "Olá, tudo bem? 👋",
+        "",
+        "Fiz uma nova encomenda pelo site da *Raízes do Sul* e estou enviando o resumo aqui!",
+        "",
+        `*MEU PEDIDO (#${orderId.slice(-6).toUpperCase()})*`,
+        "",
+        "*O que eu escolhi:*",
+        ...items.map(i => `• ${i.quantity}x ${i.name} — R$ ${(i.price * i.quantity).toFixed(2).replace('.', ',')}`),
+        "",
+        `*💰 Total:* R$ ${subtotal.toFixed(2).replace('.', ',')}`,
+        `*💸 Sinal (50%):* R$ ${signalValue.toFixed(2).replace('.', ',')}`,
+        `*💳 Pagamento:* ${friendlyPayment}`,
+        `*📍 Entrega/Retirada:* ${friendlyDelivery}`,
+        "",
+        orderDetails.notes ? `*📝 Observação:* ${orderDetails.notes}\n` : null,
+        "Fico no aguardo da confirmação de vocês para enviar o sinal de 50%. Obrigado! ✨"
+      ].filter(Boolean).join("\n");
       
       const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
       const cleanedNumber = rawNumber.replace(/\D/g, "");
