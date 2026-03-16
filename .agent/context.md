@@ -1,7 +1,7 @@
 # Contexto do Projeto
 
 ## Descrição
-Aplicação web para "Raízes do Sul", uma boutique de massas e bolos artesanais. Contém um painel admin para cadastro de produtos e gestão de encomendas. A principal movimentação da aplicação são as encomendas (pedidos), enviadas inicialmente por email, com arquitetura pronta para futura integração com WhatsApp.
+Aplicação web para "Raízes do Sul", de massas artesanais. Contém um painel admin para cadastro de produtos e gestão de encomendas. A principal movimentação da aplicação são as encomendas (pedidos), enviadas inicialmente por email, com arquitetura pronta para futura integração com WhatsApp.
 
 ## Stack / Tecnologias
 - Framework: Next.js (App Router)
@@ -57,7 +57,7 @@ Tailwind CSS + shadcn/ui customizado com tokens exclusivos. Utiliza Base UI para
 - Corpo: Instrument Sans / Inter / Outfit
 
 ### Paleta de Cores
-- **primary**: `oklch(0.42 0.12 45)` (Terracota Profundo / Crosta de Bolo)
+- **primary**: `oklch(0.42 0.12 45)` (Terracota Profundo / Crosta de Cuca)
 - **accent**: `oklch(0.94 0.03 80)` (Trigo / Mel)
 - **surface**: `oklch(0.98 0.01 70)` (Creme / Farinha)
 - **text**: `oklch(0.25 0.04 45)` (Marrom Café / Cacau)
@@ -164,3 +164,4 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - [2026-03-15] Branding — Remoção completa do termo "Boutique" e ajuste de localização genérica conforme as especificações reais do negócio.
 - [2026-03-15] Design — Redução adicional na tipografia principal do Hero para melhorar o respiro e aumento da transparência do logo de fundo para maior destaque visual.
 - [2026-03-15] Auth Fix — Corrigido bug de sessão que não atualizava o Header após login sem F5. Removido `redirectTo` da server action `loginAction` e substituído por `redirect: false` + retorno de `{ success: true }`. O cliente agora usa `router.push("/")` + `router.refresh()` para navegar e forçar a re-hidratação da sessão no `SessionProvider`.
+- [2026-03-16] Feature — Implementado upload de fotos para produtos com limite de 10MB e armazenamento local em `public/products`.

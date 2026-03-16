@@ -7,22 +7,24 @@ import bcrypt from "bcryptjs";
 
 export async function loginAction(formData: FormData) {
   try {
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    if (!email || !password) return { error: "Preencha todos os campos." };
+
     await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
+      email,
+      password,
       redirect: false,
     });
     return { success: true };
   } catch (error) {
     if (error instanceof AuthError) {
-      switch (error.type) {
-        case "CredentialsSignin":
-          return { error: "Credenciais inválidas." };
-        default:
-          return { error: "Erro ao fazer login." };
-      }
+      if (error.type === "CredentialsSignin") return { error: "Credenciais inválidas." };
+      return { error: "Erro na autenticação." };
     }
-    throw error;
+    // Don't throw here to avoid full page error
+    return { error: "Algo deu errado. Tente novamente." };
   }
 }
 
@@ -69,5 +71,5 @@ export async function registerAction(formData: FormData) {
 }
 
 export async function logoutAction() {
-  await signOut({ redirectTo: "/login", redirect: true });
+  await signOut({ redirectTo: "/login" });
 }

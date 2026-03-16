@@ -25,9 +25,8 @@ export default function LoginPage() {
         setError(res.error);
         setLoading(false);
       } else {
-        // Login bem-sucedido: navega pelo cliente para forçar re-hidratação da sessão
-        router.push("/");
-        router.refresh();
+        // Redireciona via window.location para garantir limpeza total do cache da sessão
+        window.location.href = "/";
       }
     } catch (e) {
       console.error(e);

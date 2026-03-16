@@ -61,7 +61,7 @@ export default async function Home() {
                 </span>
               </h1>
               <p className="mx-auto max-w-lg text-muted-foreground text-sm sm:text-base md:text-lg leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-                Massas frescas e bolos artesanais feitos com carinho e a autêntica tradição gaúcha para sua mesa.
+                Massas frescas e cucas artesanais feitas com carinho e a autêntica tradição gaúcha para a sua mesa.
               </p>
             </div>
 

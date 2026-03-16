@@ -29,6 +29,8 @@ declare module "next-auth" {
   }
 }
 
+const ADMIN_EMAIL = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase().trim();
+
 export const authConfig = {
   pages: {
     signIn: "/login",
@@ -36,9 +38,15 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const pathname = nextUrl.pathname;
       
-      const isPublicPage = ["/login", "/register"].includes(nextUrl.pathname);
-      const isPublicFeature = nextUrl.pathname === "/" || nextUrl.pathname.startsWith("/loja");
+      const isPublicPage = pathname === "/login" || pathname === "/register";
+      const isStaticFile = pathname.includes(".");
+      const isPublicFeature = 
+        pathname === "/" || 
+        pathname.startsWith("/loja") || 
+        pathname.startsWith("/products") ||
+        isStaticFile;
 
       if (isPublicPage) {
         if (isLoggedIn) {
@@ -50,8 +58,9 @@ export const authConfig = {
       if (isPublicFeature) return true;
       if (!isLoggedIn) return false;
       
-      if (nextUrl.pathname.startsWith("/admin")) {
-        const isAdmin = auth?.user?.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase().trim();
+      if (pathname.startsWith("/admin")) {
+        // Use normalized comparisons
+        const isAdmin = auth?.user?.email === ADMIN_EMAIL;
         return isAdmin;
       }
 

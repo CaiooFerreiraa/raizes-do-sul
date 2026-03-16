@@ -39,7 +39,7 @@ export default async function ShopPage() {
             <div className="max-w-2xl border-l border-border/50 pl-6 py-2">
               <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Nossa Loja</h1>
               <p className="text-muted-foreground text-sm md:text-base leading-relaxed mt-1">
-                Explore nossa seleção de massas frescas, bolos artesanais e delícias preparadas com todo carinho.
+                Explore nossa seleção de massas frescas, cucas artesanais e delícias preparadas com todo carinho.
               </p>
             </div>
           </div>

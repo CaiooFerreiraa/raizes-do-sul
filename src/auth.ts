@@ -5,6 +5,9 @@ import bcrypt from "bcryptjs";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
 
+const ADMIN_EMAIL = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase().trim();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
@@ -18,27 +21,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const adminEmail = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase().trim();
-        const adminPassword = process.env.ADMIN_PASSWORD;
-        const inputEmail = (credentials.email as string || "").toLowerCase().trim();
+        const inputEmail = (credentials.email as string).toLowerCase().trim();
+        const inputPassword = credentials.password as string;
 
-        if (
-          inputEmail === adminEmail &&
-          credentials.password === adminPassword
-        ) {
-          return { id: "admin-id", name: "Admin", email: adminEmail };
+        // Fast Admin Check
+        if (inputEmail === ADMIN_EMAIL && inputPassword === ADMIN_PASSWORD) {
+          return { id: "admin-id", name: "Admin", email: ADMIN_EMAIL };
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: (credentials.email as string).toLowerCase().trim() },
+          where: { email: inputEmail },
         });
 
         if (!user || !user.password) return null;
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
+        // bcryptjs is slow in JS environments. 
+        const isPasswordValid = await bcrypt.compare(inputPassword, user.password);
 
         if (!isPasswordValid) return null;
 

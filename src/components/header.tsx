@@ -7,8 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, ShoppingBag, User, PackageSearch, LayoutDashboard, ChevronRight } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import { useSession } from "next-auth/react";
-import { logoutAction } from "@/actions/auth";
+import { useSession, signOut } from "next-auth/react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -29,8 +28,9 @@ export function Header() {
     setMounted(true);
   }, []);
 
-  // Admin check
-  const isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  // Admin check - Cache normalized admin email
+  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim();
+  const isAdmin = mounted && session?.user?.email?.toLowerCase().trim() === ADMIN_EMAIL;
 
   return (
     <header className="px-4 md:px-6 h-20 md:h-24 flex items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
@@ -146,7 +146,7 @@ export function Header() {
                   <DropdownMenuSeparator className="bg-border/30 my-2" />
                   <DropdownMenuItem 
                     className="cursor-pointer rounded-2xl focus:bg-destructive/5 focus:text-destructive transition-colors py-3 px-4 text-muted-foreground font-medium"
-                    onClick={() => logoutAction()}
+                    onClick={() => signOut({ callbackUrl: "/login" })}
                   >
                     Encerrar Sessão
                   </DropdownMenuItem>
@@ -223,7 +223,7 @@ export function Header() {
                          </Link>
                        } />
                        <Button 
-                        onClick={() => logoutAction()}
+                        onClick={() => signOut({ callbackUrl: "/login" })}
                         variant="ghost" 
                         className="flex items-center justify-center gap-2 h-14 rounded-2xl border border-destructive/20 text-destructive text-[10px] font-bold uppercase tracking-widest hover:bg-destructive/5"
                       >

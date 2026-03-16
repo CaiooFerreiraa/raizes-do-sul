@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { createProductAction } from "@/actions/product";
 import { DeleteButton } from "./delete-button";
 import { BackButton } from "@/components/ui/back-button";
+import Image from "next/image";
 
 export default async function AdminProducts() {
   const products = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
@@ -15,7 +16,7 @@ export default async function AdminProducts() {
         <BackButton />
         <div className="border-l border-border/50 pl-6 py-2">
           <h1 className="font-display text-3xl sm:text-5xl font-bold text-foreground">Produtos</h1>
-          <p className="text-muted-foreground mt-1 text-md md:text-lg">Gestão de Massas, Bolos e Delícias Artesanais.</p>
+          <p className="text-muted-foreground mt-1 text-md md:text-lg">Gestão de Massas, Cucas e Delícias Artesanais.</p>
         </div>
       </div>
 
@@ -35,6 +36,16 @@ export default async function AdminProducts() {
               <Label htmlFor="description" className="text-muted-foreground ml-1">Descrição</Label>
               <Input id="description" name="description" className="bg-secondary/20 rounded-2xl h-12 px-4 shadow-inner" placeholder="Ingredientes ou detalhes do sabor..." />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="image" className="text-muted-foreground ml-1">Foto do Produto (Máx 10MB)</Label>
+              <Input 
+                id="image" 
+                name="image" 
+                type="file" 
+                accept="image/*" 
+                className="bg-secondary/20 rounded-2xl h-auto py-3 px-4 shadow-inner cursor-pointer file:cursor-pointer file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:opacity-90" 
+              />
+            </div>
             <Button type="submit" className="w-full h-12 rounded-full cursor-pointer mt-4 font-bold text-md hover:scale-[1.02] transition-transform">
               Adicionar
             </Button>
@@ -51,12 +62,30 @@ export default async function AdminProducts() {
             <div className="space-y-4">
               {products.map((product: any) => (
                 <div key={product.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border border-border/70 rounded-3xl hover:border-primary/20 hover:bg-secondary/5 transition-all duration-300">
-                  <div className="mb-4 sm:mb-0">
-                    <h3 className="font-display text-2xl font-semibold text-foreground">{product.name}</h3>
-                    {product.description && <p className="text-sm text-muted-foreground mt-1">{product.description}</p>}
-                    <p className="text-primary mt-2 font-bold text-lg">R$ {product.price.toString()}</p>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-secondary/20 border border-border/50 flex-shrink-0">
+                      {product.imageUrl ? (
+                        <Image 
+                          src={product.imageUrl} 
+                          alt={product.name} 
+                          fill 
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 italic text-[10px] text-center p-1">
+                          Sem foto
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-display text-2xl font-semibold text-foreground">{product.name}</h3>
+                      {product.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{product.description}</p>}
+                      <p className="text-primary mt-1 font-bold text-lg">R$ {product.price.toString()}</p>
+                    </div>
                   </div>
-                  <DeleteButton id={product.id} />
+                  <div className="mt-4 sm:mt-0">
+                    <DeleteButton id={product.id} />
+                  </div>
                 </div>
               ))}
             </div>
