@@ -221,22 +221,22 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
       const signalValue = subtotal / 2;
 
       const message = [
-        "Olá, tudo bem? 👋",
+        "Olá, tudo bem?",
         "",
         "Fiz uma nova encomenda pelo site da *Raízes do Sul* e estou enviando o resumo aqui!",
         "",
         `*MEU PEDIDO (#${orderId.slice(-6).toUpperCase()})*`,
         "",
         "*O que eu escolhi:*",
-        ...items.map(i => `• ${i.quantity}x ${i.name} — R$ ${(i.price * i.quantity).toFixed(2).replace('.', ',')}`),
+        ...items.map(i => `- ${i.quantity}x ${i.name} — R$ ${(i.price * i.quantity).toFixed(2).replace('.', ',')}`),
         "",
-        `*💰 Total:* R$ ${subtotal.toFixed(2).replace('.', ',')}`,
-        `*💸 Sinal (50%):* R$ ${signalValue.toFixed(2).replace('.', ',')}`,
-        `*💳 Pagamento:* ${friendlyPayment}`,
-        `*📍 Entrega/Retirada:* ${friendlyDelivery}`,
+        `*Total:* R$ ${subtotal.toFixed(2).replace('.', ',')}`,
+        `*Sinal (50%):* R$ ${signalValue.toFixed(2).replace('.', ',')}`,
+        `*Pagamento:* ${friendlyPayment}`,
+        `*Entrega/Retirada:* ${friendlyDelivery}`,
         "",
-        orderDetails.notes ? `*📝 Observação:* ${orderDetails.notes}\n` : null,
-        "Fico no aguardo da confirmação de vocês para enviar o sinal de 50%. Obrigado! ✨"
+        orderDetails.notes ? `*Observação:* ${orderDetails.notes}\n` : null,
+        "Fico no aguardo da confirmação de vocês para enviar o sinal de 50%. Obrigado!"
       ].filter(Boolean).join("\n");
       
       const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
