@@ -42,18 +42,30 @@ export async function createProductAction(formData: FormData) {
       const bytes = await image.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const result = await new Promise<{ secure_url: string; public_id: string }>(
-        (resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream({ folder: "produtos-raizes-do-sul" }, (error, result) => {
-              if (error || !result) return reject(error);
-              resolve(result);
-            })
-            .end(buffer);
-        }
-      );
-      
-      imageUrl = result.secure_url;
+      try {
+        const result = await new Promise<{ secure_url: string; public_id: string }>(
+          (resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+              { folder: "produtos-raizes-do-sul" },
+              (error, result) => {
+                if (error) {
+                  console.error("Erro interno Cloudinary:", error);
+                  return reject(error);
+                }
+                if (!result) {
+                  return reject(new Error("Cloudinary não retornou resultado"));
+                }
+                resolve(result);
+              }
+            );
+            uploadStream.end(buffer);
+          }
+        );
+        imageUrl = result.secure_url;
+      } catch (uploadError) {
+        console.error("Falha fatal no stream do Cloudinary:", uploadError);
+        return { success: false, error: "Falha ao enviar imagem para a nuvem." };
+      }
     }
 
     await prisma.product.create({
