@@ -89,7 +89,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Sheet>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-12 bg-background md:rounded-l-[4rem] border-l border-border/30 shadow-2xl relative z-10 lg:my-4 lg:mr-4">
+        <main className="flex-1 overflow-y-auto p-4 md:p-12 bg-background md:rounded-tl-[3rem] border-l border-border/30 relative z-10">
           {children}
         </main>
       </div>

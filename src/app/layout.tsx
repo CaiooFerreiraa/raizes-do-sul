@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/session-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const sans = Inter({
   variable: "--font-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Toaster position="bottom-center" />
       </body>
     </html>
   );

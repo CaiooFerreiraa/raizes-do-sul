@@ -211,8 +211,7 @@ export default async function AdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Performance List */}
-        <div className="lg:col-span-2 border border-border/50 bg-card rounded-[3rem] p-8 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-2 h-full bg-primary/20" />
+        <div className="lg:col-span-2 border border-border/50 bg-card rounded-[3rem] p-8 shadow-sm">
           <h2 className="font-display text-2xl font-bold mb-8 flex items-center">
             <TrendingUp className="mr-3 h-6 w-6 text-primary" />
             Produtos Mais Vendidos
