@@ -101,6 +101,13 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
     }
   }, [session]);
 
+  // Se mudar para DELIVERY e o pagamento for DINHEIRO, volta para PIX
+  useEffect(() => {
+    if (deliveryType === "DELIVERY" && paymentMethod === "CASH") {
+      setPaymentMethod("PIX");
+    }
+  }, [deliveryType, paymentMethod]);
+
   useEffect(() => {
     const productId = searchParams.get("productId");
     const reorderData = searchParams.get("reorder");
@@ -716,8 +723,11 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                       </Label>
                       <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 gap-2">
                         {[
-                          { id: "PIX", label: "Pix", icon: QrCode }
-                        ].map((m) => (
+                          { id: "PIX", label: "Pix", icon: QrCode },
+                          { id: "CASH", label: "Dinheiro", icon: Wallet, disabled: deliveryType === "DELIVERY" },
+                          { id: "DEBIT", label: "Cartão de Débito", icon: CreditCard },
+                          { id: "CREDIT", label: "Cartão de Crédito", icon: CreditCard },
+                        ].filter(m => !m.disabled).map((m) => (
                           <Label 
                             key={m.id} 
                             htmlFor={m.id} 
