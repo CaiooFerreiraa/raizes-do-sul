@@ -196,3 +196,4 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - [2026-03-18] Database — `prisma db push` executado para sincronizar campos `images`, `groupId`, `variantName`, `category` já presentes no schema com o banco Neon.
 - [2026-03-18] UI/Admin — Modal de edição de produto melhorado: maior (`max-w-3xl`), `Textarea` para descrição com contador, layout em 2 colunas (nome + preço), seção de variantes em card destacado, header/footer sticky com backdrop-blur.
 - [2026-03-18] Feature — Adicionado botão "Excluir Encomenda" no card de pedidos do admin. Inclui mini-modal de confirmação inline com estado `confirmDelete`, botão destrutivo animado e `deleteOrderAction` (deleta `OrderItem`s primeiro, depois o `Order`).
+- [2026-03-18] Bug Fix — Corrigido erro de compilação em `src/app/page.tsx` por uso da prop `size="xl"` não suportada no componente `Button`. Adicionada a variante `xl` à definição do componente.
