@@ -721,7 +721,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                         <CreditCard size={12} />
                         Pagamento
                       </Label>
-                      <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 gap-2">
+                      <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-2 gap-2">
                         {[
                           { id: "PIX", label: "Pix", icon: QrCode },
                           { id: "CASH", label: "Dinheiro", icon: Wallet, disabled: deliveryType === "DELIVERY" },
@@ -731,7 +731,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                           <Label 
                             key={m.id} 
                             htmlFor={m.id} 
-                            className={`flex flex-col items-center justify-center rounded-2xl border p-4 cursor-pointer transition-all ${paymentMethod === m.id ? 'border-primary bg-primary/[0.03] text-primary shadow-sm' : 'border-border/60 bg-card/10 text-muted-foreground/60 hover:border-primary/40'}`}
+                            className={`flex flex-col items-center justify-center aspect-square rounded-2xl border p-4 cursor-pointer transition-all ${paymentMethod === m.id ? 'border-primary bg-primary/[0.03] text-primary shadow-sm' : 'border-border/60 bg-card/10 text-muted-foreground/60 hover:border-primary/40'}`}
                           >
                             <RadioGroupItem value={m.id} id={m.id} className="sr-only" />
                             <m.icon size={20} className="mb-2" />
