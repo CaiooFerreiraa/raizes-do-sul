@@ -231,13 +231,17 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
         ...items.map(i => `- ${i.quantity}x ${i.name} — R$ ${(i.price * i.quantity).toFixed(2).replace('.', ',')}`),
         "",
         `*Total:* R$ ${subtotal.toFixed(2).replace('.', ',')}`,
+        "",
         `*Sinal (50%):* R$ ${signalValue.toFixed(2).replace('.', ',')}`,
+        "",
         `*Pagamento:* ${friendlyPayment}`,
+        "",
         `*Entrega/Retirada:* ${friendlyDelivery}`,
         "",
-        orderDetails.notes ? `*Observação:* ${orderDetails.notes}\n` : null,
+        orderDetails.notes ? `*Observação:* ${orderDetails.notes}` : null,
+        orderDetails.notes ? "" : null,
         "Fico no aguardo da confirmação de vocês para enviar o sinal de 50%. Obrigado!"
-      ].filter(Boolean).join("\n");
+      ].filter(item => item !== null).join("\n");
       
       const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
       const cleanedNumber = rawNumber.replace(/\D/g, "");
