@@ -54,3 +54,16 @@ export async function toggleDepositPaid(orderId: string, depositPaid: boolean) {
     return { success: false, error: "Falha ao atualizar sinal." };
   }
 }
+
+export async function deleteOrderAction(orderId: string) {
+  try {
+    await ensureAuth();
+    await prisma.orderItem.deleteMany({ where: { orderId } });
+    await prisma.order.delete({ where: { id: orderId } });
+    revalidatePath("/admin/pedidos");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao deletar encomenda:", error);
+    return { success: false, error: "Falha ao deletar a encomenda." };
+  }
+}

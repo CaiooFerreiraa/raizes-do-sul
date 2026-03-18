@@ -66,14 +66,20 @@ model Product {
   description String?  @db.Text
   price       Decimal  @db.Decimal(10, 2)
   imageUrl    String?  @map("image_url")
+  images      String[] @default([]) // Array de URLs do Cloudinary
   category    String?
   isAvailable Boolean  @default(true) @map("is_available")
+
+  // Campos de Agrupamento/Variação
+  groupId     String?  @map("group_id")
+  variantName String?  @map("variant_name") // ex: "Chocolate", "Morango"
 
   orderItems  OrderItem[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([groupId])
   @@map("products")
 }
 

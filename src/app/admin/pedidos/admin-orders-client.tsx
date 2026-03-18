@@ -5,23 +5,21 @@ import {
   Truck, 
   MapPin, 
   CreditCard, 
-  Wallet, 
-  QrCode, 
-  Building2, 
   User, 
   Calendar, 
   Clock, 
   CheckCircle2, 
-  XCircle, 
   ExternalLink, 
   MessageSquare,
   ShoppingBag,
   Search,
   Filter,
-  ChevronDown
+  ChevronDown,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { updateOrderStatus, updatePaymentStatus, toggleDepositPaid } from "@/actions/admin-orders";
+import { updateOrderStatus, updatePaymentStatus, toggleDepositPaid, deleteOrderAction } from "@/actions/admin-orders";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -185,6 +183,8 @@ export function AdminOrdersClient({ initialOrders }: { initialOrders: OrderWithI
 
 function OrderCard({ order, getStatusInfo, onStatusChange }: { order: OrderWithItems, getStatusInfo: any, onStatusChange: any }) {
   const statusInfo = getStatusInfo(order.status || "RECEIVED");
+  const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
   
   const openMaps = () => {
     if (!order.street) return;
@@ -207,6 +207,18 @@ function OrderCard({ order, getStatusInfo, onStatusChange }: { order: OrderWithI
   const handlePaymentStatus = async (s: string) => {
     const res = await updatePaymentStatus(order.id, s);
     if (res.success) toast.success("Pagamento atualizado!");
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const res = await deleteOrderAction(order.id);
+    setDeleting(false);
+    if (res.success) {
+      toast.success("Encomenda excluída.");
+      setConfirmDelete(false);
+    } else {
+      toast.error(res.error ?? "Erro ao excluir.");
+    }
   };
 
   return (
@@ -356,6 +368,48 @@ function OrderCard({ order, getStatusInfo, onStatusChange }: { order: OrderWithI
             <Button onClick={openWhatsApp} className="w-full h-12 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-green-500/20 cursor-pointer flex items-center gap-3 transition-all hover:scale-[1.02]">
               <MessageSquare size={16} /> Entrar em Contato
             </Button>
+
+            {/* Botão Excluir */}
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full h-11 rounded-2xl border border-destructive/25 text-destructive/60 hover:text-destructive hover:border-destructive/50 hover:bg-destructive/5 transition-all text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Trash2 size={13} />
+                Excluir Encomenda
+              </button>
+            ) : (
+              <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle size={14} />
+                  <p className="text-[10px] font-bold uppercase tracking-wide">Confirmar exclusão?</p>
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Essa ação é permanente e não pode ser desfeita.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    disabled={deleting}
+                    className="h-9 rounded-xl border border-border/60 text-[10px] font-bold uppercase tracking-wide text-muted-foreground hover:bg-muted/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="h-9 rounded-xl bg-destructive text-destructive-foreground text-[10px] font-bold uppercase tracking-wide hover:bg-destructive/90 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                  >
+                    {deleting ? (
+                      <span className="animate-pulse">Excluindo...</span>
+                    ) : (
+                      <><Trash2 size={11} /> Excluir</>  
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <p className="text-[9px] text-center text-muted-foreground/40 font-bold uppercase tracking-widest">
               Criado em: {new Date(order.createdAt).toLocaleDateString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
             </p>

@@ -144,6 +144,25 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - Descrição reduzida e mais compacta (agora `max-w-lg` e texto text-base a text-lg).
 - Aumentada a opacidade do logo de background (de `0.12` para `0.18`).
 
+### Componentes - K - v6
+**Data:** 2026-03-18
+**Motivo:** Melhoria do modal de edição de produto.
+- Modal expandido de `max-w-2xl` para `max-w-3xl` com altura máxima de `92vh`.
+- Campo de descrição substituído de `Input` para `Textarea` (min-h 120px, resize-none) com contador de caracteres (máx 500).
+- Layout nome + preço em grid `[1fr_auto]` na mesma linha.
+- Seção de variantes encapsulada em card com fundo `secondary/10` e bordas suaves.
+- Header e footer com `sticky` + `backdrop-blur-sm` para UX em scroll.
+- Thumbnails ampliados de 72px para 80px com sombra.
+- Adicionado componente `Textarea` do shadcn/ui ao projeto.
+
+### Componentes - K - v5
+**Data:** 2026-03-18
+**Motivo:** Visualização de produto estilo Shopee.
+- Grid de 5 colunas (responsivo) com `ShopProductCard` animado (Framer Motion `whileHover`).
+- Badge de quantidade de fotos no card.
+- Página de detalhe `/loja/[id]` com galeria de imagens (thumbnails + setas), seletor de variantes, preço em destaque, badges artesanais, CTA "Encomendar Agora" e botão de compartilhamento.
+- Formulário admin com upload de múltiplas imagens (preview com remoção), campos de categoria, groupId e variantName.
+
 ---
 
 ## Histórico de Decisões
@@ -169,3 +188,11 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - [2026-03-17] UX/Admin — Refatorado o formulário de cadastro e remoção de produtos para usar Client Components com `sonner` (toasts). As Server Actions agora retornam `{ success, error }` em vez de disparar exceções, evitando crashes no frontend e permitindo feedbacks visuais imediatos ao usuário.
 - [2026-03-17] File Storage — Implementado o SDK do Cloudinary para uploads de imagens do catálogo (diretamente na chamada do Server Action via Buffer stream). Isso resolve os limites de arquivo de banco (Base64) e o problema Read-Only da arquitetura Serverless (Vercel). A imagem deletada do banco também é apagada via API `cloudinary.uploader.destroy()`.
 - [2026-03-17] Feature — Formatado o resumo do pedido via WhatsApp para incluir quebras de linha consistentes e um visual mais limpo, garantindo que `filter(Boolean)` não remova blocos em branco desejados.
+- [2026-03-17] UI — Removidas as opções de "Pagamento na entrega" (Cartões e Dinheiro) do checkout da Encomenda, centralizando os pagamentos 100% via PIX.
+- [2026-03-18] Feature — Implementada página de detalhe do produto (`/loja/[id]`) estilo Shopee: galeria de imagens com animações (Framer Motion AnimatePresence), thumbnails clicáveis, seletor de variantes por grupo (`groupId`), preço em destaque, badges artesanais, CTA "Encomendar Agora" e compartilhamento via clipboard.
+- [2026-03-18] Feature — Melhorada listagem da loja (`/loja`) com grid 5-colunas, cards animados (`ShopProductCard`), estrelas de avaliação, badge de variante, badge de múltiplas fotos e filtro por categoria.
+- [2026-03-18] Feature — Formulário admin de produto (`/admin/produtos`) atualizado: upload de múltiplas imagens com preview, drag-area visual, campos de categoria, groupId e variantName para gerenciar grupos de sabores.
+- [2026-03-18] Action — `createProductAction` e `deleteProductAction` atualizadas: suporte a múltiplos uploads (campo `images`), campos `groupId`/`variantName`/`category`, deleção de todas as imagens do Cloudinary ao deletar produto.
+- [2026-03-18] Database — `prisma db push` executado para sincronizar campos `images`, `groupId`, `variantName`, `category` já presentes no schema com o banco Neon.
+- [2026-03-18] UI/Admin — Modal de edição de produto melhorado: maior (`max-w-3xl`), `Textarea` para descrição com contador, layout em 2 colunas (nome + preço), seção de variantes em card destacado, header/footer sticky com backdrop-blur.
+- [2026-03-18] Feature — Adicionado botão "Excluir Encomenda" no card de pedidos do admin. Inclui mini-modal de confirmação inline com estado `confirmDelete`, botão destrutivo animado e `deleteOrderAction` (deleta `OrderItem`s primeiro, depois o `Order`).

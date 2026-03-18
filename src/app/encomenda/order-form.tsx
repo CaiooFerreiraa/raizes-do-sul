@@ -714,12 +714,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                         <CreditCard size={12} />
                         Pagamento
                       </Label>
-                      <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-2 gap-2">
+                      <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-1 gap-2">
                         {[
-                          { id: "PIX", label: "Pix", icon: QrCode },
-                          { id: "DEBIT", label: "Débito", icon: CreditCard },
-                          { id: "CREDIT", label: "Crédito", icon: CreditCard },
-                          { id: "CASH", label: "Dinheiro", icon: Wallet }
+                          { id: "PIX", label: "Pix", icon: QrCode }
                         ].map((m) => (
                           <Label 
                             key={m.id} 

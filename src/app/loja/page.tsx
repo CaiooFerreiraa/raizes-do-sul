@@ -1,96 +1,111 @@
 import { prisma } from "@/infrastructure/database/prisma";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { BackButton } from "@/components/ui/back-button";
-import { Search } from "lucide-react";
 import { Header } from "@/components/header";
+import { BackButton } from "@/components/ui/back-button";
+import { ShopProductCard } from "./shop-product-card";
 
-interface Product {
+interface ProductForCard {
   id: string;
   name: string;
-  price: string | number;
+  price: string;
   description: string | null;
   imageUrl: string | null;
+  images: string[];
+  variantName: string | null;
+  category: string | null;
 }
 
 export default async function ShopPage() {
   const dbProducts = await prisma.product.findMany({
     where: { isAvailable: true },
-    orderBy: { name: "asc" }
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      price: true,
+      description: true,
+      imageUrl: true,
+      images: true,
+      variantName: true,
+      category: true,
+    },
   });
 
-  const products: Product[] = dbProducts.map((p: any) => ({
+  const products: ProductForCard[] = dbProducts.map((p: { id: string; name: string; price: { toString(): string }; description: string | null; imageUrl: string | null; images: string[]; variantName: string | null; category: string | null; }) => ({
     id: p.id,
     name: p.name,
     price: p.price.toString(),
     description: p.description,
-    imageUrl: p.imageUrl
+    imageUrl: p.imageUrl,
+    images: p.images,
+    variantName: p.variantName,
+    category: p.category,
   }));
+
+  const categories = Array.from(
+    new Set(products.map((p) => p.category).filter(Boolean) as string[])
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
 
-      <main className="flex-1 container px-4 md:px-6 py-8 md:py-12 mx-auto">
-        <div className="flex flex-col gap-8 mb-12">
+      <main className="flex-1 container px-4 md:px-6 py-8 md:py-10 mx-auto max-w-7xl">
+        {/* Cabeçalho da Loja */}
+        <div className="flex flex-col gap-6 mb-8">
           <div className="flex items-center gap-4">
             <BackButton />
-            <div className="max-w-2xl border-l border-border/50 pl-6 py-2">
-              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Nossa Loja</h1>
+            <div className="border-l border-border/50 pl-6 py-2">
+              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+                Nossa Loja
+              </h1>
               <p className="text-muted-foreground text-sm md:text-base leading-relaxed mt-1">
-                Explore nossa seleção de massas frescas, cucas artesanais e delícias preparadas com todo carinho.
+                Massas frescas, cucas artesanais e delícias feitas com carinho.
               </p>
             </div>
           </div>
+
+          {/* Filtro por Categoria */}
+          {categories.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              <span className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-primary text-primary-foreground cursor-pointer">
+                Todos
+              </span>
+              {categories.map((cat) => (
+                <span
+                  key={cat}
+                  className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border border-border/60 text-muted-foreground hover:border-primary/60 hover:text-foreground transition-colors cursor-pointer"
+                >
+                  {cat}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
+        {/* Grid de Produtos */}
         {products.length === 0 ? (
-          <div className="text-center py-16 border border-border/50 rounded-3xl bg-secondary/10">
-            <p className="text-muted-foreground text-base">Em breve, novas delícias estarão por aqui!</p>
+          <div className="text-center py-20 border border-border/50 rounded-3xl bg-secondary/10">
+            <div className="text-5xl mb-4">🫙</div>
+            <p className="text-muted-foreground text-base font-medium">
+              Em breve, novas delícias estarão por aqui!
+            </p>
           </div>
         ) : (
-          <div className="grid gap-4 md:gap-5 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product: Product) => (
-              <div key={product.id} className="group flex flex-col border border-border/50 bg-card rounded-xl md:rounded-2xl p-2 md:p-4 hover:shadow-lg transition-all duration-300">
-                <div className="aspect-[4/5] bg-secondary/80 rounded-lg md:rounded-xl mb-3 overflow-hidden relative">
-                  {product.imageUrl ? (
-                    <Image
-                      src={product.imageUrl}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center opacity-20">
-                      <Image src="/logo.webp" alt="Placeholder" fill className="object-cover" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-500" />
-                </div>
-                <div className="px-1 flex flex-col flex-1">
-                  <h3 className="font-display text-base md:text-lg font-bold text-foreground line-clamp-1 mb-1">{product.name}</h3>
-                  <p className="text-muted-foreground text-[10px] md:text-xs mb-3 line-clamp-2">
-                    {product.description || "Ingredientes selecionados e receita artesanal."}
-                  </p>
-                  <div className="mt-auto pt-2 flex flex-col gap-2">
-                    <p className="text-primary font-bold text-sm md:text-base">R$ {product.price.toString()}</p>
-                    <Link href={`/encomenda?productId=${product.id}`} className="w-full">
-                      <Button size="sm" className="w-full h-8 rounded-full text-[10px] md:text-xs font-bold cursor-pointer">
-                        Encomendar
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
+          <div className="grid gap-3 md:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {products.map((product) => (
+              <ShopProductCard key={product.id} product={product} />
             ))}
           </div>
         )}
       </main>
 
-      <footer className="border-t border-border/50 py-12 bg-secondary/10">
+      <footer className="border-t border-border/50 py-10 bg-secondary/10 mt-12">
         <div className="container px-4 md:px-6 mx-auto text-center">
-          <p className="text-muted-foreground">© 2026 Raízes do Sul • Feito com amor e tradição.</p>
+          <p className="text-muted-foreground text-sm">
+            © 2026 Raízes do Sul • Feito com amor e tradição.
+          </p>
         </div>
       </footer>
     </div>
