@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateProductAction } from "@/actions/product";
 import { toast } from "sonner";
 import { Loader2, X, ImagePlus, Layers2, Tag, DollarSign, FileText, Grid2x2 } from "lucide-react";
+import { FlavorTagsInput } from "./flavor-tags-input";
 
 interface ProductToEdit {
   id: string;
@@ -121,7 +122,7 @@ export function EditProductModal({
   }
 
   const totalImages = existingImages.length + newPreviews.length;
-  const MAX_DESCRIPTION = 500;
+  const MAX_DESCRIPTION = 1000;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -229,7 +230,7 @@ export function EditProductModal({
                   — para agrupar sabores do mesmo produto
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label
                     htmlFor="edit-groupId"
@@ -246,17 +247,12 @@ export function EditProductModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-variantName"
-                    className="text-muted-foreground text-xs"
-                  >
-                    Nome do Sabor
+                  <Label className="text-muted-foreground text-xs">
+                    Sabores
                   </Label>
-                  <Input
-                    id="edit-variantName"
+                  <FlavorTagsInput
                     name="variantName"
                     defaultValue={product.variantName ?? ""}
-                    className="bg-background rounded-xl h-10 px-4 shadow-inner text-sm"
                     placeholder="Ex: Chocolate"
                   />
                 </div>

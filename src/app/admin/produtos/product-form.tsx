@@ -9,6 +9,7 @@ import { createProductAction } from "@/actions/product";
 import { toast } from "sonner";
 import { Loader2, X, ImagePlus } from "lucide-react";
 import Image from "next/image";
+import { FlavorTagsInput } from "./flavor-tags-input";
 
 interface ImagePreview {
   url: string;
@@ -108,17 +109,17 @@ export function ProductForm() {
             Descrição
           </Label>
           <span className={`text-xs transition-colors ${
-            descriptionLength > 450
+            descriptionLength > 900
               ? "text-destructive"
               : "text-muted-foreground/50"
           }`}>
-            {descriptionLength}/500
+            {descriptionLength}/1000
           </span>
         </div>
         <Textarea
           id="description"
           name="description"
-          maxLength={500}
+          maxLength={1000}
           onChange={(e) => setDescriptionLength(e.target.value.length)}
           className="bg-secondary/20 rounded-2xl px-4 py-3.5 shadow-inner text-sm leading-relaxed resize-none min-h-[110px] placeholder:text-muted-foreground/50 focus-visible:ring-primary/30"
           placeholder="Ingredientes, modo de preparo, tamanho, sabor... Descreva bem o produto!"
@@ -146,7 +147,7 @@ export function ProductForm() {
         <p className="text-xs text-muted-foreground/70 mt-2 mb-3">
           Variantes — para agrupar sabores do mesmo produto
         </p>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-4">
           {/* Group ID */}
           <div className="space-y-2">
             <Label htmlFor="groupId" className="text-muted-foreground ml-1 text-xs">
@@ -159,15 +160,13 @@ export function ProductForm() {
               placeholder="Ex: cuca-familia"
             />
           </div>
-          {/* Variant Name */}
+          {/* Variant Name - Tags */}
           <div className="space-y-2">
-            <Label htmlFor="variantName" className="text-muted-foreground ml-1 text-xs">
-              Nome do Sabor
+            <Label className="text-muted-foreground ml-1 text-xs">
+              Sabores
             </Label>
-            <Input
-              id="variantName"
+            <FlavorTagsInput
               name="variantName"
-              className="bg-secondary/20 rounded-2xl h-10 px-4 shadow-inner text-sm"
               placeholder="Ex: Chocolate"
             />
           </div>

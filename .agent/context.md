@@ -155,6 +155,14 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - Thumbnails ampliados de 72px para 80px com sombra.
 - Adicionado componente `Textarea` do shadcn/ui ao projeto.
 
+### Componentes - K - v7
+**Data:** 2026-03-19
+**Motivo:** Descrição expandida e múltiplos sabores.
+- Limite de descrição aumentado de 500 para 1000 caracteres.
+- Campo de sabores (`variantName`) substituído por componente `FlavorTagsInput`.
+- Tags visuais com input + botão "Adicionar" e ✕ para remover individualmente.
+- Sabores armazenados como string concatenada com vírgula (backward compatible).
+
 ### Componentes - K - v5
 **Data:** 2026-03-18
 **Motivo:** Visualização de produto estilo Shopee.
@@ -198,3 +206,4 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - [2026-03-18] Feature — Adicionado botão "Excluir Encomenda" no card de pedidos do admin. Inclui mini-modal de confirmação inline com estado `confirmDelete`, botão destrutivo animado e `deleteOrderAction` (deleta `OrderItem`s primeiro, depois o `Order`).
 - [2026-03-18] Bug Fix — Corrigido erro de compilação em `src/app/page.tsx` por uso da prop `size="xl"` não suportada no componente `Button`. Adicionada a variante `xl` à definição do componente.
 - [2026-03-18] Design — Revertido o aspect ratio dos cards de produto para retangular e aplicado o formato "quadradinho" (`aspect-square` + `grid-cols-2`) especificamente nas opções de pagamento do checkout, conforme solicitado.
+- [2026-03-19] Feature — Limite de descrição aumentado de 500 para 1000 caracteres nos formulários de produto (criação e edição). Criado componente `FlavorTagsInput` para permitir adicionar múltiplos sabores via tags visuais (input + botão adicionar, tags com ✕ para remover individualmente). Os sabores são armazenados como string separada por vírgula no campo `variantName`.
