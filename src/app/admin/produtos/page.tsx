@@ -7,11 +7,18 @@ import { BackButton } from "@/components/ui/back-button";
 import Image from "next/image";
 import { Layers2 } from "lucide-react";
 
-type ProductRow = Prisma.ProductGetPayload<Record<string, never>>;
+type ProductWithFlavors = Prisma.ProductGetPayload<{
+  include: { flavors: true };
+}>;
 
 export default async function AdminProducts() {
   const products = await prisma.product.findMany({
     orderBy: { createdAt: "desc" },
+    include: {
+      flavors: {
+        orderBy: { createdAt: "asc" },
+      },
+    },
   });
 
   return (
@@ -51,7 +58,7 @@ export default async function AdminProducts() {
             </div>
           ) : (
             <div className="space-y-3">
-              {products.map((product: ProductRow) => (
+              {products.map((product: ProductWithFlavors) => (
                 <div
                   key={product.id}
                   className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border/70 rounded-2xl hover:border-primary/20 hover:bg-secondary/5 transition-all duration-300 gap-4"
@@ -85,17 +92,12 @@ export default async function AdminProducts() {
                         {product.name}
                       </h3>
 
-                      {/* Variante e Grupo */}
+                      {/* Sabores e Categoria */}
                       <div className="flex flex-wrap gap-1.5 mt-1">
-                        {product.variantName && (
-                          <span className="text-xs bg-secondary/60 text-foreground/70 px-2 py-0.5 rounded-full font-medium">
-                            {product.variantName}
-                          </span>
-                        )}
-                        {product.groupId && (
+                        {product.flavors.length > 0 && (
                           <span className="text-xs bg-primary/10 text-primary/80 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
                             <Layers2 className="w-2.5 h-2.5" />
-                            {product.groupId}
+                            {product.flavors.length} sabor{product.flavors.length > 1 ? "es" : ""}
                           </span>
                         )}
                         {product.category && (
@@ -128,9 +130,14 @@ export default async function AdminProducts() {
                         price: product.price.toString(),
                         description: product.description,
                         category: product.category,
-                        groupId: product.groupId,
-                        variantName: product.variantName,
                         images: product.images,
+                        flavors: product.flavors.map((f) => ({
+                          id: f.id,
+                          name: f.name,
+                          price: f.price.toString(),
+                          imageUrl: f.imageUrl,
+                          isAvailable: f.isAvailable,
+                        })),
                       }}
                     />
                     <DeleteButton id={product.id} />

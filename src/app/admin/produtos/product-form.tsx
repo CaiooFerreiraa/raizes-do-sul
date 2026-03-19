@@ -9,7 +9,6 @@ import { createProductAction } from "@/actions/product";
 import { toast } from "sonner";
 import { Loader2, X, ImagePlus } from "lucide-react";
 import Image from "next/image";
-import { FlavorTagsInput } from "./flavor-tags-input";
 
 interface ImagePreview {
   url: string;
@@ -142,35 +141,11 @@ export function ProductForm() {
         />
       </div>
 
-      {/* Separador de variantes */}
+      {/* Nota sobre sabores */}
       <div className="pt-1 pb-1 border-t border-border/40">
-        <p className="text-xs text-muted-foreground/70 mt-2 mb-3">
-          Variantes — para agrupar sabores do mesmo produto
+        <p className="text-xs text-muted-foreground/70 mt-2">
+          💡 Após criar o produto, você poderá adicionar sabores com preços e imagens diferentes.
         </p>
-        <div className="space-y-4">
-          {/* Group ID */}
-          <div className="space-y-2">
-            <Label htmlFor="groupId" className="text-muted-foreground ml-1 text-xs">
-              ID do Grupo
-            </Label>
-            <Input
-              id="groupId"
-              name="groupId"
-              className="bg-secondary/20 rounded-2xl h-10 px-4 shadow-inner text-sm"
-              placeholder="Ex: cuca-familia"
-            />
-          </div>
-          {/* Variant Name - Tags */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground ml-1 text-xs">
-              Sabores
-            </Label>
-            <FlavorTagsInput
-              name="variantName"
-              placeholder="Ex: Chocolate"
-            />
-          </div>
-        </div>
       </div>
 
       {/* Upload de múltiplas imagens */}

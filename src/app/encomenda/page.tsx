@@ -1,5 +1,14 @@
 import { prisma } from "@/infrastructure/database/prisma";
 import OrderForm from "./order-form";
+import type { Product, Flavor } from "@prisma/client";
+
+type FlavorDTO = {
+  id: string;
+  name: string;
+  price: string;
+  imageUrl: string | null;
+  isAvailable: boolean;
+};
 
 type ProductDTO = {
   id: string;
@@ -7,7 +16,10 @@ type ProductDTO = {
   description: string | null;
   price: string;
   imageUrl: string | null;
+  flavors: FlavorDTO[];
 };
+
+type ProductWithFlavors = Product & { flavors: Flavor[] };
 
 export const metadata = {
   title: "Fazer Encomenda | Raízes do Sul",
@@ -20,14 +32,27 @@ export default async function EncomendaPage() {
   const dbProducts = await prisma.product.findMany({
     where: { isAvailable: true },
     orderBy: { name: "asc" },
+    include: {
+      flavors: {
+        where: { isAvailable: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
   });
 
-  const products: ProductDTO[] = dbProducts.map((p: any) => ({
+  const products: ProductDTO[] = dbProducts.map((p: ProductWithFlavors) => ({
     id: p.id,
     name: p.name,
     description: p.description,
     price: p.price.toString(),
     imageUrl: p.imageUrl,
+    flavors: p.flavors.map((f: Flavor) => ({
+      id: f.id,
+      name: f.name,
+      price: f.price.toString(),
+      imageUrl: f.imageUrl,
+      isAvailable: f.isAvailable,
+    })),
   }));
 
   return (

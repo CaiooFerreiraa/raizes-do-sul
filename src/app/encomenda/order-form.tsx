@@ -47,15 +47,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type FlavorDTO = {
+  id: string;
+  name: string;
+  price: string;
+  imageUrl: string | null;
+  isAvailable: boolean;
+};
+
 type ProductDTO = {
   id: string;
   name: string;
   description: string | null;
   price: string;
   imageUrl: string | null;
+  flavors: FlavorDTO[];
 };
 
+// Chave única para item no carrinho: productId ou productId_flavorId
+type CartItemKey = string;
+
 type Step = "selection" | "checkout" | "success";
+
+function getCartKey(productId: string, flavorId?: string): CartItemKey {
+  return flavorId ? `${productId}_${flavorId}` : productId;
+}
+
+function parseCartKey(key: CartItemKey): { productId: string; flavorId?: string } {
+  const parts = key.split("_");
+  if (parts.length === 2) {
+    return { productId: parts[0], flavorId: parts[1] };
+  }
+  return { productId: parts[0] };
+}
 
 function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }) {
   const [step, setStep] = useState<Step>("selection");
@@ -110,12 +134,14 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
   useEffect(() => {
     const productId = searchParams.get("productId");
+    const flavorId = searchParams.get("flavorId");
     const reorderData = searchParams.get("reorder");
 
     if (productId && initialProducts.some((p: ProductDTO) => p.id === productId)) {
+      const cartKey = getCartKey(productId, flavorId || undefined);
       setQuantities(prev => {
-        if (prev[productId]) return prev;
-        return { ...prev, [productId]: 1 };
+        if (prev[cartKey]) return prev;
+        return { ...prev, [cartKey]: 1 };
       });
     }
 
@@ -126,7 +152,8 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
           const newQuantities: { [key: string]: number } = {};
           decoded.forEach((item: any) => {
             if (item.productId && initialProducts.some(p => p.id === item.productId)) {
-              newQuantities[item.productId] = item.quantity;
+              const cartKey = getCartKey(item.productId, item.flavorId);
+              newQuantities[cartKey] = item.quantity;
             }
           });
           setQuantities(prev => ({ ...prev, ...newQuantities }));
@@ -142,23 +169,61 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleQuantity = (id: string, delta: number) => {
+  const handleQuantity = (cartKey: string, delta: number) => {
     setQuantities((prev: { [key: string]: number }) => {
-      const next = (prev[id] || 0) + delta;
-      return { ...prev, [id]: Math.max(0, next) };
+      const next = (prev[cartKey] || 0) + delta;
+      return { ...prev, [cartKey]: Math.max(0, next) };
     });
   };
 
   const getSubtotal = () => {
     let total = 0;
-    initialProducts.forEach((p: ProductDTO) => {
-      const q = quantities[p.id] || 0;
-      total += parseFloat(p.price) * q;
+    Object.entries(quantities).forEach(([cartKey, qty]) => {
+      if (qty <= 0) return;
+      const { productId, flavorId } = parseCartKey(cartKey);
+      const product = initialProducts.find(p => p.id === productId);
+      if (!product) return;
+      
+      if (flavorId) {
+        const flavor = product.flavors.find(f => f.id === flavorId);
+        if (flavor) {
+          total += parseFloat(flavor.price) * qty;
+        }
+      } else {
+        total += parseFloat(product.price) * qty;
+      }
     });
     return total;
   };
 
-  const selectedProducts = initialProducts.filter((p: ProductDTO) => (quantities[p.id] || 0) > 0);
+  // Itens selecionados com info completa
+  const getSelectedItems = () => {
+    const items: Array<{
+      cartKey: string;
+      product: ProductDTO;
+      flavor: FlavorDTO | null;
+      quantity: number;
+      price: string;
+      displayName: string;
+    }> = [];
+    
+    Object.entries(quantities).forEach(([cartKey, qty]) => {
+      if (qty <= 0) return;
+      const { productId, flavorId } = parseCartKey(cartKey);
+      const product = initialProducts.find(p => p.id === productId);
+      if (!product) return;
+      
+      const flavor = flavorId ? product.flavors.find(f => f.id === flavorId) || null : null;
+      const price = flavor ? flavor.price : product.price;
+      const displayName = flavor ? `${product.name} - ${flavor.name}` : product.name;
+      
+      items.push({ cartKey, product, flavor, quantity: qty, price, displayName });
+    });
+    
+    return items;
+  };
+
+  const selectedItems = getSelectedItems();
   const totalItems = Object.values(quantities).reduce((a, b) => a + b, 0);
 
   const handleNextStep = () => {
@@ -191,11 +256,13 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
       return;
     }
 
-    const items = selectedProducts.map((p: ProductDTO) => ({
-      productId: p.id,
-      name: p.name,
-      quantity: quantities[p.id],
-      price: parseFloat(p.price),
+    const items = selectedItems.map((item) => ({
+      productId: item.product.id,
+      flavorId: item.flavor?.id,
+      flavorName: item.flavor?.name,
+      name: item.displayName,
+      quantity: item.quantity,
+      price: parseFloat(item.price),
     }));
 
     setLoading(true);
@@ -405,24 +472,24 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                           </SheetHeader>
                           
                           <div className="space-y-4">
-                            {selectedProducts.length === 0 ? (
+                            {selectedItems.length === 0 ? (
                               <div className="py-20 text-center space-y-4">
                                 <ShoppingBag size={40} className="mx-auto text-muted-foreground/10" />
                                 <p className="text-xs font-medium text-muted-foreground/60 italic">Sua sacola está vazia</p>
                               </div>
                             ) : (
                               <div className="space-y-4">
-                                {selectedProducts.map((p) => (
-                                  <div key={p.id} className="flex justify-between items-center group bg-primary/[0.02] p-4 rounded-2xl border border-primary/5">
+                                {selectedItems.map((item) => (
+                                  <div key={item.cartKey} className="flex justify-between items-center group bg-primary/[0.02] p-4 rounded-2xl border border-primary/5">
                                     <div className="flex-1">
-                                      <p className="font-bold text-xs text-primary/80">{p.name}</p>
-                                      <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-wider">R$ {parseFloat(p.price).toFixed(2)}</p>
+                                      <p className="font-bold text-xs text-primary/80">{item.displayName}</p>
+                                      <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-wider">R$ {parseFloat(item.price).toFixed(2)}</p>
                                     </div>
                                     <div className="flex items-center gap-3">
                                       <div className="flex items-center bg-background rounded-full border border-border/40 p-1">
-                                        <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(p.id, -1)}><Minus size={12} /></button>
-                                        <span className="text-xs font-bold w-6 text-center">{quantities[p.id]}</span>
-                                        <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(p.id, 1)}><Plus size={12} /></button>
+                                        <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(item.cartKey, -1)}><Minus size={12} /></button>
+                                        <span className="text-xs font-bold w-6 text-center">{item.quantity}</span>
+                                        <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(item.cartKey, 1)}><Plus size={12} /></button>
                                       </div>
                                     </div>
                                   </div>
@@ -487,7 +554,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                     </div>
 
                     <div className="space-y-4">
-                      {selectedProducts.length === 0 ? (
+                      {selectedItems.length === 0 ? (
                         <div className="py-16 text-center space-y-3">
                           <div className="h-16 w-16 mx-auto bg-muted/10 rounded-full flex items-center justify-center text-muted-foreground/20">
                             <ShoppingBag size={28} />
@@ -496,31 +563,31 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                         </div>
                       ) : (
                         <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-2 custom-scrollbar">
-                          {selectedProducts.map((p) => (
-                            <motion.div layout key={p.id} className="flex justify-between items-center group bg-primary/[0.02] p-3 rounded-xl border border-primary/5 hover:border-primary/10 transition-all">
+                          {selectedItems.map((item) => (
+                            <motion.div layout key={item.cartKey} className="flex justify-between items-center group bg-primary/[0.02] p-3 rounded-xl border border-primary/5 hover:border-primary/10 transition-all">
                               <div className="flex-1 space-y-0.5">
-                                <p className="font-medium text-[11px] leading-tight text-primary/80">{p.name}</p>
-                                <p className="text-[9px] text-muted-foreground/80 font-medium uppercase tracking-wider">R$ {parseFloat(p.price).toFixed(2)}</p>
+                                <p className="font-medium text-[11px] leading-tight text-primary/80">{item.displayName}</p>
+                                <p className="text-[9px] text-muted-foreground/80 font-medium uppercase tracking-wider">R$ {parseFloat(item.price).toFixed(2)}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="flex items-center bg-background/50 rounded-full border border-border/40 p-0.5">
                                   <button 
                                     className="h-6 w-6 rounded-full flex items-center justify-center text-primary hover:bg-primary/5 cursor-pointer transition-colors" 
-                                    onClick={() => handleQuantity(p.id, -1)}
+                                    onClick={() => handleQuantity(item.cartKey, -1)}
                                   >
                                     <Minus size={10} />
                                   </button>
-                                  <span className="text-[10px] font-bold w-5 text-center">{quantities[p.id]}</span>
+                                  <span className="text-[10px] font-bold w-5 text-center">{item.quantity}</span>
                                   <button 
                                     className="h-6 w-6 rounded-full flex items-center justify-center text-primary hover:bg-primary/5 cursor-pointer transition-colors" 
-                                    onClick={() => handleQuantity(p.id, 1)}
+                                    onClick={() => handleQuantity(item.cartKey, 1)}
                                   >
                                     <Plus size={10} />
                                   </button>
                                 </div>
                                 <button 
                                   className="h-7 w-7 text-muted-foreground/20 hover:text-destructive hover:bg-destructive/5 rounded-full transition-colors cursor-pointer flex items-center justify-center"
-                                  onClick={() => handleQuantity(p.id, -quantities[p.id])}
+                                  onClick={() => handleQuantity(item.cartKey, -item.quantity)}
                                 >
                                   <Trash2 size={12} />
                                 </button>
@@ -892,13 +959,13 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                   <h3 className="text-[11px] font-bold text-muted-foreground/40 uppercase tracking-[0.4em] ml-1">Resumo</h3>
                   
                   <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                    {selectedProducts.map((p) => (
-                      <div key={p.id} className="flex flex-col items-center gap-1.5 peer group">
+                    {selectedItems.map((item) => (
+                      <div key={item.cartKey} className="flex flex-col items-center gap-1.5 peer group">
                         <div className="space-y-1">
-                          <p className="font-bold text-xs text-primary/80 group-hover:text-primary transition-colors">{p.name}</p>
-                          <p className="text-[9px] text-muted-foreground/60 font-bold uppercase tracking-widest">{quantities[p.id]} UN · R$ {parseFloat(p.price).toFixed(2).replace(".", ",")}</p>
+                          <p className="font-bold text-xs text-primary/80 group-hover:text-primary transition-colors">{item.displayName}</p>
+                          <p className="text-[9px] text-muted-foreground/60 font-bold uppercase tracking-widest">{item.quantity} UN · R$ {parseFloat(item.price).toFixed(2).replace(".", ",")}</p>
                         </div>
-                        <p className="text-[13px] font-display font-bold text-primary">R$ {(quantities[p.id] * parseFloat(p.price)).toFixed(2).replace(".", ",")}</p>
+                        <p className="text-[13px] font-display font-bold text-primary">R$ {(item.quantity * parseFloat(item.price)).toFixed(2).replace(".", ",")}</p>
                         <div className="w-8 h-px bg-border/10 mt-2 group-last:hidden" />
                       </div>
                     ))}

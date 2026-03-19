@@ -15,8 +15,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateProductAction } from "@/actions/product";
 import { toast } from "sonner";
-import { Loader2, X, ImagePlus, Layers2, Tag, DollarSign, FileText, Grid2x2 } from "lucide-react";
-import { FlavorTagsInput } from "./flavor-tags-input";
+import { Loader2, X, ImagePlus, Tag, DollarSign, FileText, Grid2x2 } from "lucide-react";
+import { FlavorManager } from "./flavor-manager";
+
+interface Flavor {
+  id: string;
+  name: string;
+  price: string;
+  imageUrl: string | null;
+  isAvailable: boolean;
+}
 
 interface ProductToEdit {
   id: string;
@@ -24,9 +32,8 @@ interface ProductToEdit {
   price: string;
   description: string | null;
   category: string | null;
-  groupId: string | null;
-  variantName: string | null;
   images: string[];
+  flavors: Flavor[];
 }
 
 interface NewImagePreview {
@@ -96,8 +103,6 @@ export function EditProductModal({
     formData.set("price", rawForm.get("price") as string);
     formData.set("description", (rawForm.get("description") as string) ?? "");
     formData.set("category", (rawForm.get("category") as string) ?? "");
-    formData.set("groupId", (rawForm.get("groupId") as string) ?? "");
-    formData.set("variantName", (rawForm.get("variantName") as string) ?? "");
 
     // URLs existentes a MANTER (como JSON)
     formData.set("existingImages", JSON.stringify(existingImages));
@@ -219,44 +224,9 @@ export function EditProductModal({
               />
             </div>
 
-            {/* Variantes */}
-            <div className="rounded-2xl border border-border/50 bg-secondary/10 p-5 space-y-4">
-              <div className="flex items-center gap-2">
-                <Layers2 className="w-4 h-4 text-primary/60" />
-                <p className="text-sm font-medium text-foreground/80">
-                  Variantes
-                </p>
-                <span className="text-xs text-muted-foreground/60 ml-1">
-                  — para agrupar sabores do mesmo produto
-                </span>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-groupId"
-                    className="text-muted-foreground text-xs"
-                  >
-                    ID do Grupo
-                  </Label>
-                  <Input
-                    id="edit-groupId"
-                    name="groupId"
-                    defaultValue={product.groupId ?? ""}
-                    className="bg-background rounded-xl h-10 px-4 shadow-inner text-sm"
-                    placeholder="Ex: cuca-familia"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">
-                    Sabores
-                  </Label>
-                  <FlavorTagsInput
-                    name="variantName"
-                    defaultValue={product.variantName ?? ""}
-                    placeholder="Ex: Chocolate"
-                  />
-                </div>
-              </div>
+            {/* Sabores */}
+            <div className="rounded-2xl border border-border/50 bg-secondary/10 p-5">
+              <FlavorManager productId={product.id} flavors={product.flavors} />
             </div>
 
             {/* Gerenciamento de Imagens */}
