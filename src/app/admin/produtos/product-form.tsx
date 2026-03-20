@@ -142,6 +142,20 @@ export function ProductForm() {
         />
       </div>
 
+      {/* Sabores Disponíveis */}
+      <div className="space-y-2">
+        <Label className="text-muted-foreground ml-1 text-xs">
+          Sabores Disponíveis
+        </Label>
+        <FlavorTagsInput
+          name="flavors"
+          placeholder="Ex: Chocolate, Morango, Banana"
+        />
+        <p className="text-xs text-muted-foreground/60">
+          Se o produto tiver variações de sabor, adicione aqui. O cliente poderá escolher ao encomendar.
+        </p>
+      </div>
+
       {/* Separador de variantes */}
       <div className="pt-1 pb-1 border-t border-border/40">
         <p className="text-xs text-muted-foreground/70 mt-2 mb-3">

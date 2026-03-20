@@ -73,6 +73,9 @@ model Product {
   // Campos de Agrupamento/Variação
   groupId     String?  @map("group_id")
   variantName String?  @map("variant_name") // ex: "Chocolate", "Morango"
+  
+  // Novo campo para sabores disponíveis
+  flavors     String[] @default([]) // ex: ["Chocolate", "Morango", "Banana"]
 
   orderItems  OrderItem[]
 

@@ -26,6 +26,7 @@ interface ProductToEdit {
   category: string | null;
   groupId: string | null;
   variantName: string | null;
+  flavors: string[];
   images: string[];
 }
 
@@ -217,6 +218,24 @@ export function EditProductModal({
                 className="bg-secondary/20 rounded-2xl h-12 px-4 shadow-inner"
                 placeholder="Ex: Cucas, Massas, Pães"
               />
+            </div>
+
+            {/* Sabores Disponíveis */}
+            <div className="rounded-2xl border border-border/50 bg-secondary/10 p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-primary/60" />
+                <p className="text-sm font-medium text-foreground/80">
+                  Sabores Disponíveis
+                </p>
+              </div>
+              <FlavorTagsInput
+                name="flavors"
+                defaultValue={product.flavors.join(",")}
+                placeholder="Ex: Chocolate, Morango, Banana"
+              />
+              <p className="text-xs text-muted-foreground/60">
+                Se o produto tiver variações de sabor, adicione aqui. O cliente poderá escolher ao encomendar.
+              </p>
             </div>
 
             {/* Variantes */}

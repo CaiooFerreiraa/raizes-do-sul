@@ -13,6 +13,7 @@ interface ProductToEdit {
   category: string | null;
   groupId: string | null;
   variantName: string | null;
+  flavors: string[];
   images: string[];
 }
 

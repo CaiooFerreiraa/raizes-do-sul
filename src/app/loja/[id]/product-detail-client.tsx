@@ -26,25 +26,14 @@ interface Product {
   images: string[];
   category: string | null;
   isAvailable: boolean;
-  groupId: string | null;
-  variantName: string | null;
-}
-
-interface Variant {
-  id: string;
-  name: string;
-  variantName: string | null;
-  price: string;
-  imageUrl: string | null;
-  isAvailable: boolean;
+  flavors: string[];
 }
 
 interface ProductDetailClientProps {
   product: Product;
-  variants: Variant[];
 }
 
-export function ProductDetailClient({ product, variants }: ProductDetailClientProps) {
+export function ProductDetailClient({ product }: ProductDetailClientProps) {
   const router = useRouter();
 
   // Montar galeria: images[] primeiro, depois imageUrl como fallback
@@ -56,12 +45,13 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
   ];
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [selectedVariantId, setSelectedVariantId] = useState(product.id);
+  const [selectedFlavor, setSelectedFlavor] = useState<string | null>(
+    product.flavors.length > 0 ? product.flavors[0] : null
+  );
   const [copied, setCopied] = useState(false);
 
-  const currentVariant =
-    variants.find((v) => v.id === selectedVariantId) ?? null;
-  const displayPrice = currentVariant ? currentVariant.price : product.price;
+  const hasMultipleImages = galleryImages.length > 1;
+  const hasFlavors = product.flavors.length > 0;
 
   function prevImage() {
     setActiveImageIndex((prev) =>
@@ -85,8 +75,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
     }
   }
 
-  const hasMultipleImages = galleryImages.length > 1;
-  const hasVariants = variants.length > 1;
+
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-6xl">
@@ -220,11 +209,6 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground leading-tight">
               {product.name}
             </h1>
-            {product.variantName && (
-              <p className="text-muted-foreground text-sm">
-                Sabor: <span className="font-medium text-foreground">{product.variantName}</span>
-              </p>
-            )}
 
             {/* Avaliação fake / estrelas (visual) */}
             <div className="flex items-center gap-1.5 pt-1">
@@ -250,7 +234,7 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
             <div className="flex items-end gap-2">
               <span className="font-display text-4xl font-bold text-primary">
                 R${" "}
-                {parseFloat(displayPrice).toLocaleString("pt-BR", {
+                {parseFloat(product.price).toLocaleString("pt-BR", {
                   minimumFractionDigits: 2,
                 })}
               </span>
@@ -258,55 +242,41 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
             </div>
           </div>
 
-          {/* Seletor de Variantes */}
-          {hasVariants && (
-            <div className="space-y-2">
+          {/* Seletor de Sabores */}
+          {hasFlavors && (
+            <div className="space-y-3">
               <p className="text-sm font-semibold text-foreground">
-                Escolha o Sabor / Variante
+                Escolha o Sabor
               </p>
               <div className="flex flex-wrap gap-2">
-                {variants.map((v) => {
-                  const isSelected = v.id === selectedVariantId;
-                  const isCurrentProduct = v.id === product.id;
+                {product.flavors.map((flavor) => {
+                  const isSelected = flavor === selectedFlavor;
                   return (
-                    <Link
-                      key={v.id}
-                      href={isCurrentProduct ? "#" : `/loja/${v.id}`}
-                      onClick={(e) => {
-                        if (isCurrentProduct) {
-                          e.preventDefault();
-                          return;
-                        }
-                        setSelectedVariantId(v.id);
-                      }}
-                      className={`relative flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all cursor-pointer hover:scale-105 ${
+                    <button
+                      key={flavor}
+                      type="button"
+                      onClick={() => setSelectedFlavor(flavor)}
+                      className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all ${
                         isSelected
                           ? "border-primary bg-primary/5 shadow-sm"
                           : "border-border/60 hover:border-primary/50 bg-card"
-                      } ${!v.isAvailable ? "opacity-40 cursor-not-allowed" : ""}`}
+                      }`}
                     >
-                      {v.imageUrl && (
-                        <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-secondary/30">
-                          <Image
-                            src={v.imageUrl}
-                            alt={v.variantName ?? v.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      )}
-                      <span className="text-xs font-medium text-center leading-tight max-w-[70px]">
-                        {v.variantName ?? v.name}
+                      <span className="text-sm font-medium text-center">
+                        {flavor}
                       </span>
                       {isSelected && (
                         <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
                           <Check className="w-3 h-3 text-primary-foreground" />
                         </div>
                       )}
-                    </Link>
+                    </button>
                   );
                 })}
               </div>
+              <p className="text-xs text-muted-foreground/60">
+                Selecione o sabor desejado antes de encomendar
+              </p>
             </div>
           )}
 
@@ -338,7 +308,9 @@ export function ProductDetailClient({ product, variants }: ProductDetailClientPr
             <Link
               href={
                 product.isAvailable
-                  ? `/encomenda?productId=${selectedVariantId}`
+                  ? `/encomenda?productId=${product.id}${
+                      selectedFlavor ? `&flavor=${encodeURIComponent(selectedFlavor)}` : ""
+                    }`
                   : "#"
               }
               className="w-full"

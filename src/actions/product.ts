@@ -41,6 +41,11 @@ export async function createProductAction(formData: FormData) {
     const category = formData.get("category") as string | null;
     const groupId = (formData.get("groupId") as string | null) || null;
     const variantName = (formData.get("variantName") as string | null) || null;
+    const flavorsStr = (formData.get("flavors") as string | null) || "";
+    const flavors = flavorsStr
+      .split(",")
+      .map((f) => f.trim())
+      .filter(Boolean);
 
     // Múltiplas imagens: campo "images" pode ter vários valores
     const imageFiles = formData.getAll("images") as File[];
@@ -95,6 +100,7 @@ export async function createProductAction(formData: FormData) {
         category: category || null,
         groupId: groupId || null,
         variantName: variantName || null,
+        flavors,
         // Primeira imagem vai para imageUrl (compatibilidade), restantes em images[]
         imageUrl: uploadedUrls[0] ?? null,
         images: uploadedUrls,
@@ -173,6 +179,11 @@ export async function updateProductAction(id: string, formData: FormData) {
     const category = (formData.get("category") as string | null) || null;
     const groupId = (formData.get("groupId") as string | null) || null;
     const variantName = (formData.get("variantName") as string | null) || null;
+    const flavorsStr = (formData.get("flavors") as string | null) || "";
+    const flavors = flavorsStr
+      .split(",")
+      .map((f) => f.trim())
+      .filter(Boolean);
 
     if (!name || !priceStr) {
       return { success: false, error: "Nome e preço são obrigatórios." };
@@ -259,6 +270,7 @@ export async function updateProductAction(id: string, formData: FormData) {
         category: category || null,
         groupId: groupId || null,
         variantName: variantName || null,
+        flavors,
         imageUrl: finalImages[0] ?? null,
         images: finalImages,
       },

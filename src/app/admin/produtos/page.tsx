@@ -130,6 +130,7 @@ export default async function AdminProducts() {
                         category: product.category,
                         groupId: product.groupId,
                         variantName: product.variantName,
+                        flavors: product.flavors,
                         images: product.images,
                       }}
                     />

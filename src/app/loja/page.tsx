@@ -16,9 +16,18 @@ interface ProductForCard {
   category: string | null;
 }
 
-export default async function ShopPage() {
+interface ShopPageProps {
+  searchParams: Promise<{ category?: string }>;
+}
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const { category } = await searchParams;
+  
   const dbProducts = await prisma.product.findMany({
-    where: { isAvailable: true },
+    where: { 
+      isAvailable: true,
+      ...(category && { category }),
+    },
     orderBy: { name: "asc" },
     select: {
       id: true,
@@ -69,16 +78,28 @@ export default async function ShopPage() {
           {/* Filtro por Categoria */}
           {categories.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-              <span className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold bg-primary text-primary-foreground cursor-pointer">
+              <Link 
+                href="/loja"
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                  !category 
+                    ? "bg-primary text-primary-foreground" 
+                    : "border border-border/60 text-muted-foreground hover:border-primary/60 hover:text-foreground"
+                }`}
+              >
                 Todos
-              </span>
+              </Link>
               {categories.map((cat) => (
-                <span
+                <Link
                   key={cat}
-                  className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border border-border/60 text-muted-foreground hover:border-primary/60 hover:text-foreground transition-colors cursor-pointer"
+                  href={`/loja?category=${encodeURIComponent(cat)}`}
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    category === cat
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border/60 text-muted-foreground hover:border-primary/60 hover:text-foreground"
+                  }`}
                 >
                   {cat}
-                </span>
+                </Link>
               ))}
             </div>
           )}

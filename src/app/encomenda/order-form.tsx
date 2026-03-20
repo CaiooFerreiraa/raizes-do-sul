@@ -53,14 +53,22 @@ type ProductDTO = {
   description: string | null;
   price: string;
   imageUrl: string | null;
+  flavors: string[];
 };
 
 type Step = "selection" | "checkout" | "success";
 
-function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }) {
+interface OrderFormContentProps {
+  initialProducts: ProductDTO[];
+  preselectedProductId?: string;
+  preselectedFlavor?: string;
+}
+
+function OrderFormContent({ initialProducts, preselectedProductId, preselectedFlavor }: OrderFormContentProps) {
   const [step, setStep] = useState<Step>("selection");
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  const [selectedFlavors, setSelectedFlavors] = useState<{ [key: string]: string }>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [deliveryType, setDeliveryType] = useState("PICKUP");
@@ -110,13 +118,32 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
   useEffect(() => {
     const productId = searchParams.get("productId");
+    const flavor = searchParams.get("flavor");
     const reorderData = searchParams.get("reorder");
 
+    // Se vier productId da URL, adiciona 1 unidade
     if (productId && initialProducts.some((p: ProductDTO) => p.id === productId)) {
       setQuantities(prev => {
         if (prev[productId]) return prev;
         return { ...prev, [productId]: 1 };
       });
+      
+      // Se vier flavor também, armazena
+      if (flavor) {
+        setSelectedFlavors(prev => ({ ...prev, [productId]: flavor }));
+      }
+    }
+    
+    // Suporte para preselected via props (alternativa ao searchParams)
+    if (preselectedProductId && initialProducts.some((p: ProductDTO) => p.id === preselectedProductId)) {
+      setQuantities(prev => {
+        if (prev[preselectedProductId]) return prev;
+        return { ...prev, [preselectedProductId]: 1 };
+      });
+      
+      if (preselectedFlavor) {
+        setSelectedFlavors(prev => ({ ...prev, [preselectedProductId]: preselectedFlavor }));
+      }
     }
 
     if (reorderData) {
@@ -136,7 +163,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
         console.error("Erro ao processar reencomenda:", e);
       }
     }
-  }, [searchParams, initialProducts]);
+  }, [searchParams, initialProducts, preselectedProductId, preselectedFlavor]);
 
   const filteredProducts = initialProducts.filter((p: ProductDTO) =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -193,7 +220,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
     const items = selectedProducts.map((p: ProductDTO) => ({
       productId: p.id,
-      name: p.name,
+      name: selectedFlavors[p.id] ? `${p.name} - ${selectedFlavors[p.id]}` : p.name,
       quantity: quantities[p.id],
       price: parseFloat(p.price),
     }));
@@ -955,7 +982,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
   );
 }
 
-export default function OrderForm({ initialProducts }: { initialProducts: ProductDTO[] }) {
+export default function OrderForm({ initialProducts, preselectedProductId, preselectedFlavor }: { initialProducts: ProductDTO[]; preselectedProductId?: string; preselectedFlavor?: string }) {
   return (
     <Suspense fallback={<div className="flex flex-col items-center justify-center min-h-screen space-y-8 bg-background">
       <motion.div 
@@ -976,7 +1003,7 @@ export default function OrderForm({ initialProducts }: { initialProducts: Produc
         <p className="text-muted-foreground font-bold uppercase tracking-[0.4em] text-xs">Artesanal & Tradição</p>
       </div>
     </div>}>
-      <OrderFormContent initialProducts={initialProducts} />
+      <OrderFormContent initialProducts={initialProducts} preselectedProductId={preselectedProductId} preselectedFlavor={preselectedFlavor} />
     </Suspense>
   );
 }
