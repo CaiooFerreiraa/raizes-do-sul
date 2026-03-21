@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+// Re-compile trigger: 2026-03-21T20:43:00-03:00
 import { prisma } from "@/infrastructure/database/prisma";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
