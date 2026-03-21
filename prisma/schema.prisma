@@ -12,39 +12,34 @@ model User {
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
   image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
   password      String?
-  
-  // Informações de entrega/contato
-  phone         String?
-  street        String?
-  number        String?
   neighborhood  String?
+  number        String?
+  phone         String?
   reference     String?
-
+  street        String?
   accounts      Account[]
   sessions      Session[]
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String  @map("user_id")
-  type               String
-  provider           String
-  providerAccountId  String  @map("provider_account_id")
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -61,53 +56,44 @@ model Session {
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
-  description String?  @db.Text
-  price       Decimal  @db.Decimal(10, 2)
-  imageUrl    String?  @map("image_url")
-  images      String[] @default([]) // Array de URLs do Cloudinary
+  description String?
+  price       Decimal     @db.Decimal(10, 2)
+  imageUrl    String?     @map("image_url")
   category    String?
-  isAvailable Boolean  @default(true) @map("is_available")
-
+  isAvailable Boolean     @default(true) @map("is_available")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  images      String[]    @default([])
   flavors     Flavor[]
   orderItems  OrderItem[]
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("products")
 }
 
 model Order {
-  id            String   @id @default(cuid())
-  customerName  String   @map("customer_name")
-  customerEmail String   @map("customer_email")
-  customerPhone String?  @map("customer_phone")
-  status        String   @default("PENDING") // RECEIVED, CONFIRMED, PRODUCTION, SHIPPING, DELIVERED, CANCELLED
-  total         Decimal  @db.Decimal(10, 2)
-  notes         String?  @db.Text
-  
-  items         OrderItem[]
-
-  deliveryType  String   @default("PICKUP") @map("delivery_type") // PICKUP, DELIVERY
-  pickupPoint   String?  @map("pickup_point") // "Loja", "Feira"
-  
-  // Address for delivery
-  street        String?
-  number        String?
+  id            String      @id @default(cuid())
+  customerName  String      @map("customer_name")
+  customerEmail String      @map("customer_email")
+  customerPhone String?     @map("customer_phone")
+  status        String      @default("PENDING")
+  total         Decimal     @db.Decimal(10, 2)
+  notes         String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  deliveryType  String      @default("PICKUP") @map("delivery_type")
+  depositPaid   Boolean     @default(false) @map("deposit_paid")
   neighborhood  String?
+  number        String?
+  paymentMethod String      @default("PIX") @map("payment_method")
+  paymentStatus String      @default("PENDING") @map("payment_status")
+  pickupPoint   String?     @map("pickup_point")
   reference     String?
-  
-  paymentMethod String   @default("PIX") @map("payment_method")
-  paymentStatus String   @default("PENDING") @map("payment_status")
-  depositPaid   Boolean  @default(false) @map("deposit_paid")
-  
-  scheduledDate DateTime? @map("scheduled_date")
-  scheduledTime String?   @map("scheduled_time")
-
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  scheduledDate DateTime?   @map("scheduled_date")
+  scheduledTime String?     @map("scheduled_time")
+  street        String?
+  items         OrderItem[]
 
   @@map("orders")
 }
@@ -116,15 +102,14 @@ model OrderItem {
   id          String   @id @default(cuid())
   orderId     String   @map("order_id")
   productId   String?  @map("product_id")
-  flavorId    String?  @map("flavor_id")
-  flavorName  String?  @map("flavor_name")
   quantity    Int      @default(1)
   price       Decimal  @db.Decimal(10, 2)
   productName String?  @map("product_name")
-
-  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  flavor  Flavor?  @relation(fields: [flavorId], references: [id], onDelete: SetNull)
+  flavorId    String?  @map("flavor_id")
+  flavorName  String?  @map("flavor_name")
+  flavor      Flavor?  @relation(fields: [flavorId], references: [id])
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])
@@ -133,18 +118,16 @@ model OrderItem {
 }
 
 model Flavor {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
-  price       Decimal  @db.Decimal(10, 2)
-  imageUrl    String?  @map("image_url")
-  isAvailable Boolean  @default(true) @map("is_available")
-  productId   String   @map("product_id")
-  
+  price       Decimal     @db.Decimal(10, 2)
+  imageUrl    String?     @map("image_url")
+  isAvailable Boolean     @default(true) @map("is_available")
+  productId   String      @map("product_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
   product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   orderItems  OrderItem[]
-
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@index([productId])
   @@map("flavors")

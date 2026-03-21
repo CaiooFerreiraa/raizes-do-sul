@@ -2,6 +2,7 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { Header } from "@/components/header";
 import { BackButton } from "@/components/ui/back-button";
 import { ShopProductCard } from "./shop-product-card";
+import Link from "next/link";
 import type { Decimal } from "@prisma/client/runtime/client";
 
 interface ProductForCard {
@@ -74,9 +75,15 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     };
   });
 
+  // Get ALL available categories from all products to show in the filter pills
+  const allProductsForCategories = await prisma.product.findMany({
+    where: { isAvailable: true },
+    select: { category: true }
+  });
+
   const categories = Array.from(
-    new Set(products.map((p) => p.category).filter(Boolean) as string[])
-  );
+    new Set(allProductsForCategories.map((p: { category: string | null }) => p.category).filter(Boolean) as string[])
+  ).sort();
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -84,43 +91,45 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
       <main className="flex-1 container px-4 md:px-6 py-8 md:py-10 mx-auto max-w-7xl">
         {/* Cabeçalho da Loja */}
-        <div className="flex flex-col gap-6 mb-8">
-          <div className="flex items-center gap-4">
-            <BackButton />
-            <div className="border-l border-border/50 pl-6 py-2">
-              <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+        <div className="flex flex-col gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="flex items-start md:items-center gap-3 md:gap-4">
+            <div className="mt-1 md:mt-0">
+               <BackButton />
+            </div>
+            <div className="border-l border-border/30 md:border-border/50 pl-4 md:pl-6 py-1 md:py-2">
+              <h1 className="font-display text-xl md:text-3xl font-bold text-foreground leading-tight">
                 Nossa Loja
               </h1>
-              <p className="text-muted-foreground text-sm md:text-base leading-relaxed mt-1">
+              <p className="text-muted-foreground text-xs md:text-base leading-snug md:leading-relaxed mt-0.5">
                 Massas frescas, cucas artesanais e delícias feitas com carinho.
               </p>
             </div>
           </div>
 
-          {/* Filtro por Categoria */}
+          {/* Filtro por Categoria - Agora com Flex Wrap e Centralizado no Celular */}
           {categories.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            <div className="flex flex-wrap justify-center gap-2 mb-8">
               <Link 
                 href="/loja"
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                className={`px-4 py-2 rounded-2xl text-[10px] md:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${
                   !category 
-                    ? "bg-primary text-primary-foreground" 
-                    : "border border-border/60 text-muted-foreground hover:border-primary/60 hover:text-foreground"
+                    ? "bg-primary text-white shadow-md" 
+                    : "bg-white/50 border border-border/50 text-muted-foreground hover:bg-white hover:text-foreground"
                 }`}
               >
                 Todos
               </Link>
-              {categories.map((cat) => (
+              {categories.sort().map((cat) => (
                 <Link
                   key={cat}
                   href={`/loja?category=${encodeURIComponent(cat)}`}
-                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-2xl text-[10px] md:text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${
                     category === cat
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border/60 text-muted-foreground hover:border-primary/60 hover:text-foreground"
+                      ? "bg-primary text-white shadow-md"
+                      : "bg-white/50 border border-border/50 text-muted-foreground hover:bg-white hover:text-foreground"
                   }`}
                 >
-                  {cat}
+                  {cat.slice(0, 1).toUpperCase() + cat.slice(1).toLowerCase()}
                 </Link>
               ))}
             </div>

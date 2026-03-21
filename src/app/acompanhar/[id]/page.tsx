@@ -1,5 +1,6 @@
 import { prisma } from "@/infrastructure/database/prisma";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import OrderTrackingClient from "./order-tracking-client";
 
 export default async function TrackOrderPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,5 +16,9 @@ export default async function TrackOrderPage({ params }: { params: Promise<{ id:
   }
 
   const serializedOrder = JSON.parse(JSON.stringify(order));
-  return <OrderTrackingClient order={serializedOrder} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center">Carregando...</div>}>
+      <OrderTrackingClient order={serializedOrder} />
+    </Suspense>
+  );
 }

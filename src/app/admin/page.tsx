@@ -90,7 +90,7 @@ export default async function AdminDashboard() {
       prisma.order.count({ where: { scheduledDate: { gte: tomorrowDate, lt: dayAfterTomorrow } } as any }),
       prisma.order.count({ where: { status: { in: ["RECEIVED", "CONFIRMED", "PRODUCTION", "PENDING"] } } }),
       prisma.order.count({ where: { status: { in: ["DELIVERED", "COMPLETED"] } } }),
-      prisma.order.count({ where: { paymentStatus: "PENDING" } }),
+      prisma.order.count({ where: { paymentStatus: { in: ["PENDING", null] as any } } }),
     ]);
     [ordersToday, ordersTomorrow, pendingOrders, completedOrders, pendingPayment] = counts;
   } catch (error) {

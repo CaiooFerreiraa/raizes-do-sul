@@ -61,6 +61,7 @@ type ProductDTO = {
   description: string | null;
   price: string;
   imageUrl: string | null;
+  images: string[];
   flavors: FlavorDTO[];
 };
 
@@ -84,7 +85,19 @@ function parseCartKey(key: CartItemKey): { productId: string; flavorId?: string 
 function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }) {
   const [step, setStep] = useState<Step>("selection");
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
-  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  const [isOnlinePayment, setIsOnlinePayment] = useState(false);
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('cart_quantities');
+      return saved ? JSON.parse(saved) : {};
+    }
+    return {};
+  });
+
+  // Persistir no localStorage
+  useEffect(() => {
+    localStorage.setItem('cart_quantities', JSON.stringify(quantities));
+  }, [quantities]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [deliveryType, setDeliveryType] = useState("PICKUP");
@@ -263,6 +276,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
       name: item.displayName,
       quantity: item.quantity,
       price: parseFloat(item.price),
+      imageUrl: item.flavor?.imageUrl || item.product.imageUrl || (item.product.images && item.product.images.length > 0 ? item.product.images[0] : undefined),
     }));
 
     setLoading(true);
@@ -277,7 +291,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
     if (res.success) {
       const orderId = res.orderId as string;
+      const paymentUrl = (res as any).paymentUrl as string | undefined;
       setCreatedOrderId(orderId);
+      setIsOnlinePayment(!!paymentUrl);
       
       // WhatsApp Resume
       const friendlyPayment = {
@@ -294,6 +310,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
       const subtotal = getSubtotal();
       const signalValue = subtotal / 2;
 
+      // Se for Cartão de Crédito via AbacatePay, a mensagem muda um pouco no WhatsApp
+      const isOnlinePayment = !!paymentUrl;
+
       const message = [
         "Olá, tudo bem?",
         "",
@@ -302,19 +321,24 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
         `*MEU PEDIDO (#${orderId.slice(-6).toUpperCase()})*`,
         "",
         "*O que eu escolhi:*",
-        ...items.map(i => `- ${i.quantity}x ${i.name} — R$ ${(i.price * i.quantity).toFixed(2).replace('.', ',')}`),
+        ...selectedItems.map(item => {
+          const flavorMsg = item.flavor ? ` (${item.flavor.name})` : "";
+          return `- ${item.quantity}x ${item.product.name}${flavorMsg} — R$ ${(parseFloat(item.price) * item.quantity).toFixed(2).replace('.', ',')}`;
+        }),
         "",
         `*Total:* R$ ${subtotal.toFixed(2).replace('.', ',')}`,
         "",
-        `*Sinal (50%):* R$ ${signalValue.toFixed(2).replace('.', ',')}`,
-        "",
-        `*Pagamento:* ${friendlyPayment}`,
+        !paymentUrl ? `*Sinal (50%):* R$ ${signalValue.toFixed(2).replace('.', ',')}` : null,
+        !paymentUrl ? "" : null,
+        `*Pagamento:* ${friendlyPayment}${paymentUrl ? ' (Pago Online)' : ''}`,
         "",
         `*Entrega/Retirada:* ${friendlyDelivery}`,
         "",
         orderDetails.notes ? `*Observação:* ${orderDetails.notes}` : null,
         orderDetails.notes ? "" : null,
-        "Fico no aguardo da confirmação de vocês para enviar o sinal de 50%. Obrigado!"
+        paymentUrl 
+          ? "O pagamento já foi realizado via cartão. Fico no aguardo da confirmação de vocês!"
+          : "Fico no aguardo da confirmação de vocês para enviar o sinal de 50%. Obrigado!"
       ].filter(item => item !== null).join("\n");
       
       const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
@@ -324,11 +348,16 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
       setStep("success");
       setQuantities({});
+      localStorage.removeItem('cart_quantities');
       window.scrollTo({ top: 0, behavior: "smooth" });
       
       // Auto redirect after delay
       setTimeout(() => {
-        window.open(url, '_blank');
+        if (paymentUrl) {
+          window.location.href = paymentUrl; // Redirect to AbacatePay
+        } else {
+          window.open(url, '_blank'); // Open WhatsApp
+        }
       }, 2000);
     } else {
       toast.error(res.error || "Ocorreu um erro ao enviar.");
@@ -370,7 +399,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
           </div>
           
           <p className="text-sm md:text-md text-muted-foreground max-w-md mx-auto leading-relaxed font-medium">
-            Sua encomenda está em nossa fila de produção. Em instantes, nossa equipe entrará em contato via <b>WhatsApp</b> para confirmar os detalhes e combinar o pagamento do <b>sinal de 50%</b>.
+            Sua encomenda está em nossa fila de produção. Em instantes, nossa equipe entrará em contato via <b>WhatsApp</b> para confirmar os detalhes. {isOnlinePayment ? "Como o pagamento já foi realizado via cartão, basta aguardar a confirmação!" : "Ficamos no aguardo do envio do comprovante do sinal de 50%."}
           </p>
         </div>
 
@@ -792,7 +821,6 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                         {[
                           { id: "PIX", label: "Pix", icon: QrCode },
                           { id: "CASH", label: "Dinheiro", icon: Wallet, disabled: deliveryType === "DELIVERY" },
-                          { id: "DEBIT", label: "Cartão de Débito", icon: CreditCard },
                           { id: "CREDIT", label: "Cartão de Crédito", icon: CreditCard },
                         ].filter(m => !m.disabled).map((m) => (
                           <Label 
@@ -872,7 +900,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                     </div>
                     <div className="space-y-2">
                       <h4 className="text-xs font-bold text-amber-900/80 uppercase tracking-wider">Atenção: Finalização do Pedido</h4>
-                      <p className="text-xs text-amber-900/80 leading-relaxed font-bold">A produção de pedidos por encomenda inicia apenas após a confirmação do pagamento de <span className="text-amber-700 underline decoration-2 underline-offset-4">50% do valor total</span> via WhatsApp.</p>
+                      <p className="text-xs text-amber-900/80 leading-relaxed font-bold">A produção inicia apenas após a confirmação do pagamento de <span className="text-amber-700 underline decoration-2 underline-offset-4">50% do valor (Sinal) via PIX</span> no WhatsApp.</p>
                     </div>
                   </div>
 
@@ -981,7 +1009,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                   <div className="p-7 bg-primary/[0.03] rounded-[2.5rem] border border-primary/10 space-y-3 w-full flex flex-col items-center shadow-inner">
                     <div className="flex items-center gap-2 opacity-50">
                       <AlertCircle size={12} className="text-primary" />
-                      <span className="text-[9px] font-bold uppercase tracking-widest">Sinal Bancário (50%)</span>
+                      <span className="text-[9px] font-bold uppercase tracking-widest">Sinal via PIX (50%)</span>
                     </div>
                     <p className="text-3xl font-display font-bold tracking-tight text-primary">R$ {(getSubtotal() / 2).toFixed(2).replace(".", ",")}</p>
                   </div>
@@ -1036,7 +1064,7 @@ export default function OrderForm({ initialProducts }: { initialProducts: Produc
           scale: { repeat: Infinity, duration: 1.5 },
           borderRadius: { repeat: Infinity, duration: 2 }
         }} 
-        className="h-24 w-24 border-8 border-primary/10 border-t-primary shadow-2xl shadow-primary/20" 
+        className="h-24 w-24 rounded-full border-8 border-primary/10 border-t-primary shadow-2xl shadow-primary/20" 
       />
       <div className="text-center space-y-2">
         <p className="text-primary font-display text-4xl font-bold italic tracking-tight animate-pulse">Raízes do Sul</p>

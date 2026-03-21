@@ -14,7 +14,9 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface OrderTrackingClientProps {
   order: any;
@@ -30,8 +32,36 @@ const steps = [
 
 export default function OrderTrackingClient({ order }: OrderTrackingClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [justPaid, setJustPaid] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("status") === "paid") {
+      setJustPaid(true);
+      // Ensure cart is cleared if for some reason it wasn't
+      localStorage.removeItem('cart_quantities');
+      toast.success("Pagamento confirmado com sucesso!");
+    }
+  }, [searchParams]);
 
   const isCancelled = order.status === "CANCELLED";
+
+  // Auto-refresh logic to catch webhook updates
+  useEffect(() => {
+    // If order is paid, make sure cart is cleared
+    if (order.paymentStatus === "PAID" || order.paymentStatus === "CONFIRMED") {
+      localStorage.removeItem('cart_quantities');
+    }
+
+    // Only refresh if payment is pending and order is not cancelled
+    const isPending = order.paymentStatus === "PENDING" || order.paymentStatus === null;
+    if (isPending && !isCancelled) {
+      const interval = setInterval(() => {
+        router.refresh();
+      }, 10000); // 10 seconds
+      return () => clearInterval(interval);
+    }
+  }, [order.paymentStatus, isCancelled, router]);
   
   // Find current step index
   let currentStepIndex = steps.findIndex(s => s.id === order.status);
@@ -178,12 +208,47 @@ export default function OrderTrackingClient({ order }: OrderTrackingClientProps)
                <p className="text-3xl font-display font-bold text-primary">R$ {parseFloat(order.total).toFixed(2).replace(".", ",")}</p>
              </div>
              
-             <div className={`text-[10px] px-3 py-1.5 rounded-full font-bold uppercase tracking-widest border ${order.paymentStatus === 'CONFIRMED' ? 'bg-green-100/50 text-green-700 border-green-200' : 'bg-amber-100/50 text-amber-700 border-amber-200'}`}>
-               {order.paymentStatus === 'CONFIRMED' ? 'Pagamento Aprovado' : 'Pagamento Pendente'}
-             </div>
+             <div
+                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${
+                  order.paymentStatus === "PAID" || order.paymentStatus === "CONFIRMED"
+                    ? "bg-green-100 text-green-700 border-green-200 shadow-sm"
+                    : "bg-amber-100 text-amber-700 border-amber-200"
+                }`}
+              >
+                {order.paymentStatus === "PAID" || order.paymentStatus === "CONFIRMED" ? "Pagamento Aprovado" : "Pagamento Pendente"}
+              </div>
            </div>
 
-           {order.paymentStatus === "PENDING" && !isCancelled && (
+           { (order.paymentStatus === "PAID" || order.paymentStatus === "CONFIRMED") && !isCancelled && (
+             <div className="mt-4 p-5 bg-green-500/10 rounded-2xl border border-green-500/20 flex flex-col gap-4">
+               <div className="flex items-start gap-3">
+                 <CheckCircle2 size={18} className="text-green-600 shrink-0 mt-0.5" />
+                 <div className="space-y-1">
+                   <p className="text-xs font-bold text-green-900/80 leading-relaxed uppercase tracking-wider">
+                     Pagamento Confirmado!
+                   </p>
+                   <p className="text-[11px] text-green-800/60 leading-relaxed">
+                     Seu pedido já está em nossa fila de produção. Você pode enviar uma mensagem automática avisando-nos via WhatsApp.
+                   </p>
+                 </div>
+               </div>
+               
+               <Button 
+                 onClick={() => {
+                   const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
+                   const cleanedNumber = rawNumber.replace(/\D/g, "");
+                   const orderId = order.id.slice(-6).toUpperCase();
+                   const message = encodeURIComponent(`Olá! Acabei de realizar o pagamento do meu pedido Raízes do Sul (#${orderId}) via AbacatePay. Gostaria de confirmar o recebimento!`);
+                   window.open(`https://wa.me/${cleanedNumber}?text=${message}`, '_blank');
+                 }}
+                 className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl h-12 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shadow-green-600/10"
+               >
+                 Avisar via WhatsApp
+               </Button>
+             </div>
+           )}
+
+           { (order.paymentStatus === "PENDING" || order.paymentStatus === null) && !isCancelled && (
              <div className="mt-4 p-4 bg-amber-500/10 rounded-2xl border border-amber-500/20 flex items-start gap-3">
                <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
                <p className="text-xs font-bold text-amber-900/80 leading-relaxed">

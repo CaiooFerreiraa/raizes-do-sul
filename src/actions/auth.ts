@@ -1,9 +1,10 @@
-"use server"
-
+"use server";
 import { signIn, signOut } from "@/auth";
 import { AuthError } from "next-auth";
 import { prisma } from "@/infrastructure/database/prisma";
 import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export async function loginAction(formData: FormData) {
   try {
@@ -15,15 +16,24 @@ export async function loginAction(formData: FormData) {
     await signIn("credentials", {
       email,
       password,
-      redirect: false,
+      redirectTo: "/",
     });
+    
     return { success: true };
   } catch (error) {
     if (error instanceof AuthError) {
       if (error.type === "CredentialsSignin") return { error: "Credenciais inválidas." };
       return { error: "Erro na autenticação." };
     }
-    // Don't throw here to avoid full page error
+    
+    // Importante: Rethrow de erros de redirecionamento do Next.js
+    // para que o framework possa processar o redirecionamento corretamente
+    if ((error as any).digest?.startsWith("NEXT_REDIRECT")) {
+      revalidatePath("/", "layout"); // Limpa o cache da UI para refletir a nova sessão
+      throw error;
+    }
+
+    console.error("Auth Error:", error);
     return { error: "Algo deu errado. Tente novamente." };
   }
 }

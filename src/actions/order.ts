@@ -2,6 +2,7 @@
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { revalidatePath } from "next/cache";
+import { createAbacatePayCheckout } from "@/lib/abacate-pay";
 
 interface OrderItemInput {
   productId: string;
@@ -10,6 +11,7 @@ interface OrderItemInput {
   name: string; 
   quantity: number;
   price: number;
+  imageUrl?: string;
 }
 
 interface CreateOrderInput {
@@ -95,8 +97,37 @@ export async function createOrder(data: CreateOrderInput) {
       } as any,
     });
 
+    let paymentUrl: string | undefined = undefined;
+
+    if (data.paymentMethod === "CREDIT") {
+       try {
+        const checkout = await createAbacatePayCheckout({
+          externalId: order.id,
+          customer: {
+            name: data.customerName,
+            email: data.customerEmail,
+            cellphone: data.customerPhone || "(00) 00000-0000",
+          },
+          products: data.items.map((item) => ({
+             externalId: item.flavorId ? `v2-${item.productId}-${item.flavorId}` : `v2-${item.productId}`,
+             name: item.name,
+             quantity: item.quantity,
+             price: Math.round(item.price * 100),
+             imageUrl: item.imageUrl,
+          })),
+          returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/acompanhar/${order.id}`,
+          completionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/acompanhar/${order.id}?status=paid`,
+        });
+        
+        paymentUrl = checkout.url;
+       } catch (apError) {
+         console.error("Erro ao gerar AbacatePay V2:", apError);
+         // Optionally notify the user but keep the order
+       }
+    }
+
     revalidatePath("/admin/pedidos");
-    return { success: true, orderId: order.id };
+    return { success: true, orderId: order.id, paymentUrl };
   } catch (error) {
     console.error("Erro ao criar encomenda:", error);
     return { success: false, error: "Erro interno ao processar a encomenda. Tente novamente." };

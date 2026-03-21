@@ -11,7 +11,7 @@ Aplicação web para "Raízes do Sul", de massas artesanais. Contém um painel a
 - Linguagem: TypeScript (strict mode)
 - Animações: Framer Motion
 - Banco de Dados: PostgreSQL (Neon) + Prisma
-- APIs: WhatsApp (Direct Linking), AbacatePay (Draft)
+- APIs: WhatsApp (Direct Linking), AbacatePay (API V2)
 
 ## Convenções e Padrões
 - Princípios da Clean Architecture: Divisão em `app`, `components`, `domain`, `infrastructure`, `lib`, `actions`.
@@ -208,3 +208,7 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - [2026-03-18] Design — Revertido o aspect ratio dos cards de produto para retangular e aplicado o formato "quadradinho" (`aspect-square` + `grid-cols-2`) especificamente nas opções de pagamento do checkout, conforme solicitado.
 - [2026-03-19] Feature — Limite de descrição aumentado de 500 para 1000 caracteres nos formulários de produto (criação e edição). Criado componente `FlavorTagsInput` para permitir adicionar múltiplos sabores via tags visuais (input + botão adicionar, tags com ✕ para remover individualmente). Os sabores são armazenados como string separada por vírgula no campo `variantName`.
 - [2026-03-19] Bug Fix — Corrigido erro de compilação no `product-detail-client.tsx` (remoção de duplicação de variáveis legadas) e atualizada a interface/props de `OrderForm` (`/encomenda/page.tsx`) para aceitar corretamente a seleção múltipla de sabores, resolvendo o erro de tipagem de `initialProducts`.
+- [2026-03-21] Feature — Integração com AbacatePay API V2 para pagamentos via Cartão de Crédito. PIX continua sendo direcionado para WhatsApp conforme regra de negócio. Implementado fluxo `v2/customers/create` -> `v2/products/create` -> `v2/checkouts/create` para garantir compatibilidade com o novo modelo de catálogo da AbacatePay.
+- [2026-03-21] Optimization — Refatorada a integração com AbacatePay para reutilizar produtos e clientes existentes via `externalId` e `email`, evitando poluição do catálogo na API. Adicionada lógica de busca (`getOrCreate`) antes da criação.
+- [2026-03-21] Enhancement — Adicionado suporte a imagens nos produtos da AbacatePay. Como a API V2 suporta apenas uma imagem, o sistema envia a imagem principal (URL do Cloudinary) do produto ou sabor selecionado.
+- [2026-03-21] Enhancement — Atualizado o sistema de status de pagamento para suportar a string `"PAID"` retornada pelos webhooks da AbacatePay. Implementada persistência do carrinho (itens escolhidos) via `localStorage` no formulário de encomenda, garantindo que os itens sejam preservados entre recargas e limpos automaticamente após a criação do pedido ou confirmação de pagamento. Adicionado feedback visual de sucesso (toast) ao retornar de um checkout aprovado.

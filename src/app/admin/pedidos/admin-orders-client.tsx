@@ -285,13 +285,13 @@ function OrderCard({ order, getStatusInfo, onStatusChange }: { order: OrderWithI
                 <DropdownMenu>
                   <DropdownMenuTrigger 
                     render={
-                      <button className={`text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border cursor-pointer hover:opacity-80 transition-all ${order.paymentStatus === 'CONFIRMED' ? 'bg-green-100/50 text-green-700 border-green-200' : 'bg-red-100/50 text-red-700 border-red-200'}`} />
+                      <button className={`text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border cursor-pointer hover:opacity-80 transition-all ${order.paymentStatus === 'CONFIRMED' || order.paymentStatus === 'PAID' ? 'bg-green-100/50 text-green-700 border-green-200' : 'bg-red-100/50 text-red-700 border-red-200'}`} />
                     }
                   >
-                    {order.paymentStatus === 'CONFIRMED' ? 'Pago' : 'Pendente'}
+                    {order.paymentStatus === 'CONFIRMED' || order.paymentStatus === 'PAID' ? 'Pago' : 'Pendente'}
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="rounded-xl p-1 shadow-2xl bg-card border-border/20">
-                    <DropdownMenuItem onClick={() => handlePaymentStatus('CONFIRMED')} className="rounded-lg text-[10px] font-bold uppercase tracking-wider py-2 cursor-pointer">Pago</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handlePaymentStatus('PAID')} className="rounded-lg text-[10px] font-bold uppercase tracking-wider py-2 cursor-pointer">Pago</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handlePaymentStatus('PENDING')} className="rounded-lg text-[10px] font-bold uppercase tracking-wider py-2 cursor-pointer">Pendente</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

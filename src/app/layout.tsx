@@ -36,6 +36,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body
         className={`${sans.variable} ${display.variable} font-sans antialiased selection:bg-primary/20`}
+        suppressHydrationWarning
       >
         <AuthProvider>
           {children}

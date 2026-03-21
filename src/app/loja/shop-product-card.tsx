@@ -122,8 +122,8 @@ export function ShopProductCard({ product }: ShopProductCardProps) {
                   R$ {formattedPrice}
                 </p>
               </div>
-              <div className="w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 flex-shrink-0">
-                <ShoppingBag className="w-3.5 h-3.5 text-primary group-hover:text-primary-foreground transition-colors" />
+              <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 flex-shrink-0">
+                <ShoppingBag className="w-4 h-4 text-primary group-hover:text-primary-foreground transition-colors" />
               </div>
             </div>
           </div>

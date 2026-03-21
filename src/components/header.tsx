@@ -103,6 +103,7 @@ export function Header() {
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger
+                  id="user-menu-trigger"
                   render={
                     <Button variant="ghost" className="relative h-12 w-12 rounded-full bg-primary/5 hover:bg-primary/10 border border-primary/20 p-0 overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all">
                       {session.user?.image ? (
@@ -161,6 +162,7 @@ export function Header() {
       <div className="md:hidden">
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger
+            id="mobile-menu-trigger"
             nativeButton={true}
             render={
               <Button variant="ghost" size="icon" className="cursor-pointer text-foreground h-10 w-10">
