@@ -70,19 +70,12 @@ model Product {
   category    String?
   isAvailable Boolean  @default(true) @map("is_available")
 
-  // Campos de Agrupamento/Variação
-  groupId     String?  @map("group_id")
-  variantName String?  @map("variant_name") // ex: "Chocolate", "Morango"
-  
-  // Novo campo para sabores disponíveis
-  flavors     String[] @default([]) // ex: ["Chocolate", "Morango", "Banana"]
-
+  flavors     Flavor[]
   orderItems  OrderItem[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@index([groupId])
   @@map("products")
 }
 
@@ -123,14 +116,36 @@ model OrderItem {
   id          String   @id @default(cuid())
   orderId     String   @map("order_id")
   productId   String?  @map("product_id")
+  flavorId    String?  @map("flavor_id")
+  flavorName  String?  @map("flavor_name")
   quantity    Int      @default(1)
   price       Decimal  @db.Decimal(10, 2)
   productName String?  @map("product_name")
 
   order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  flavor  Flavor?  @relation(fields: [flavorId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([productId])
+  @@index([flavorId])
   @@map("order_items")
+}
+
+model Flavor {
+  id          String   @id @default(cuid())
+  name        String
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String?  @map("image_url")
+  isAvailable Boolean  @default(true) @map("is_available")
+  productId   String   @map("product_id")
+  
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([productId])
+  @@map("flavors")
 }

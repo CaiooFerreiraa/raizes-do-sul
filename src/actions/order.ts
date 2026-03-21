@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 
 interface OrderItemInput {
   productId: string;
+  flavorId?: string;
+  flavorName?: string;
   name: string; 
   quantity: number;
   price: number;
@@ -35,23 +37,34 @@ export async function createOrder(data: CreateOrderInput) {
     }
 
     const total = data.items.reduce<number>(
-      (acc: number, item: any) => acc + item.price * item.quantity,
+      (acc: number, item: OrderItemInput) => acc + item.price * item.quantity,
       0
     );
 
     // Create order items first to map them correctly
     const orderItems = await Promise.all(
-      data.items.map(async (item: any) => {
+      data.items.map(async (item: OrderItemInput) => {
         let dbProduct: { id: string } | null = null;
+        let dbFlavor: { id: string; name: string } | null = null;
+        
         if (item.productId && item.productId.length > 5) {
           dbProduct = await prisma.product.findUnique({
             where: { id: item.productId },
           });
         }
 
+        if (item.flavorId && item.flavorId.length > 5) {
+          dbFlavor = await prisma.flavor.findUnique({
+            where: { id: item.flavorId },
+            select: { id: true, name: true },
+          });
+        }
+
         return {
           productId: dbProduct ? dbProduct.id : null,
           productName: item.name,
+          flavorId: dbFlavor ? dbFlavor.id : null,
+          flavorName: item.flavorName || (dbFlavor ? dbFlavor.name : null),
           quantity: item.quantity,
           price: item.price,
         };

@@ -5,16 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import { EditProductModal } from "./edit-product-modal";
 
+interface Flavor {
+  id: string;
+  name: string;
+  price: string;
+  imageUrl: string | null;
+  isAvailable: boolean;
+}
+
 interface ProductToEdit {
   id: string;
   name: string;
   price: string;
   description: string | null;
   category: string | null;
-  groupId: string | null;
-  variantName: string | null;
-  flavors: string[];
   images: string[];
+  flavors: Flavor[];
 }
 
 interface EditButtonProps {

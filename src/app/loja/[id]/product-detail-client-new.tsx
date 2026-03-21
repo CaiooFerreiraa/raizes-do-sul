@@ -59,8 +59,12 @@ export function ProductDetailClient({ product, flavors }: ProductDetailClientPro
   const [copied, setCopied] = useState(false);
 
   const selectedFlavor = flavors.find((f) => f.id === selectedFlavorId) ?? null;
+  
+  // Se tem sabores, usa o preço do sabor selecionado; senão, usa o preço base
   const displayPrice = selectedFlavor ? selectedFlavor.price : product.price;
-  const hasFlavors = flavors.length > 0;
+  
+  // Se tem sabores e um está selecionado, usa a imagem do sabor (se tiver)
+  const flavorImage = selectedFlavor?.imageUrl;
 
   function prevImage() {
     setActiveImageIndex((prev) =>
@@ -85,6 +89,17 @@ export function ProductDetailClient({ product, flavors }: ProductDetailClientPro
   }
 
   const hasMultipleImages = galleryImages.length > 1;
+  const hasFlavors = flavors.length > 0;
+  
+  // Se produto tem sabores, precisa selecionar um para encomendar
+  const canOrder = product.isAvailable && (!hasFlavors || (selectedFlavor && selectedFlavor.isAvailable));
+  
+  // Query params para encomenda
+  const orderParams = new URLSearchParams();
+  orderParams.set("productId", product.id);
+  if (selectedFlavorId) {
+    orderParams.set("flavorId", selectedFlavorId);
+  }
 
   return (
     <div className="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-6xl">
@@ -251,66 +266,80 @@ export function ProductDetailClient({ product, flavors }: ProductDetailClientPro
             </div>
           </div>
 
-          {/* Seletor de Sabores (Estilo Shopee) */}
+          {/* ─── Seletor de Sabores (Estilo Shopee) ─── */}
           {hasFlavors && (
             <div className="space-y-3">
               <p className="text-sm font-semibold text-foreground">
                 Escolha o Sabor
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {flavors.map((flavor) => {
                   const isSelected = flavor.id === selectedFlavorId;
+                  const isUnavailable = !flavor.isAvailable;
+                  
                   return (
                     <button
                       key={flavor.id}
-                      onClick={() => {
-                        if (flavor.isAvailable) {
-                          setSelectedFlavorId(flavor.id);
-                        }
-                      }}
-                      disabled={!flavor.isAvailable}
-                      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer ${
+                      onClick={() => !isUnavailable && setSelectedFlavorId(flavor.id)}
+                      disabled={isUnavailable}
+                      className={`relative flex items-center gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer text-left ${
                         isSelected
-                          ? "border-primary bg-primary/5 shadow-md scale-[1.02]"
-                          : "border-border/60 hover:border-primary/50 bg-card hover:bg-secondary/20"
-                      } ${!flavor.isAvailable ? "opacity-50 cursor-not-allowed grayscale" : ""}`}
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border/60 hover:border-primary/50 bg-card"
+                      } ${isUnavailable ? "opacity-50 cursor-not-allowed" : "hover:scale-[1.02]"}`}
                     >
+                      {/* Imagem do sabor */}
                       {flavor.imageUrl ? (
-                        <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-secondary/30">
+                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-secondary/30 flex-shrink-0">
                           <Image
                             src={flavor.imageUrl}
                             alt={flavor.name}
                             fill
                             className="object-cover"
                           />
-                          {!flavor.isAvailable && (
-                            <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
-                              <span className="text-[10px] font-bold text-destructive uppercase">Esgotado</span>
-                            </div>
-                          )}
                         </div>
                       ) : (
-                        <div className="w-16 h-16 rounded-lg bg-secondary/50 flex items-center justify-center">
-                          <ImageOff className="w-6 h-6 text-muted-foreground/40" />
+                        <div className="w-12 h-12 rounded-lg bg-secondary/30 flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg">🍰</span>
                         </div>
                       )}
-                      <div className="text-center space-y-0.5">
-                        <span className="text-xs font-medium leading-tight block max-w-[80px] truncate">
+                      
+                      {/* Info do sabor */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {flavor.name}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-medium">
-                          R$ {parseFloat(flavor.price).toFixed(2).replace(".", ",")}
-                        </span>
+                        </p>
+                        <p className="text-xs text-primary font-semibold">
+                          R$ {parseFloat(flavor.price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                        </p>
                       </div>
+                      
+                      {/* Check de selecionado */}
                       {isSelected && (
-                        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center shadow-sm">
+                        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
                           <Check className="w-3 h-3 text-primary-foreground" />
+                        </div>
+                      )}
+                      
+                      {/* Badge indisponível */}
+                      {isUnavailable && (
+                        <div className="absolute inset-0 bg-background/60 rounded-xl flex items-center justify-center">
+                          <span className="text-xs font-medium text-muted-foreground bg-background/90 px-2 py-0.5 rounded">
+                            Esgotado
+                          </span>
                         </div>
                       )}
                     </button>
                   );
                 })}
               </div>
+              
+              {/* Aviso se nenhum sabor selecionado */}
+              {!selectedFlavorId && (
+                <p className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 rounded-lg">
+                  ⚠️ Selecione um sabor para continuar
+                </p>
+              )}
             </div>
           )}
 
@@ -340,24 +369,24 @@ export function ProductDetailClient({ product, flavors }: ProductDetailClientPro
           {/* CTAs */}
           <div className="flex flex-col gap-3 pt-2">
             <Link
-              href={
-                product.isAvailable && (!hasFlavors || selectedFlavorId)
-                  ? `/encomenda?productId=${product.id}${selectedFlavorId ? `&flavorId=${selectedFlavorId}` : ""}`
-                  : "#"
-              }
+              href={canOrder ? `/encomenda?${orderParams.toString()}` : "#"}
               className="w-full"
+              onClick={(e) => !canOrder && e.preventDefault()}
             >
               <Button
                 size="lg"
-                disabled={!product.isAvailable || (hasFlavors && !selectedFlavorId)}
+                disabled={!canOrder}
                 className="w-full h-14 rounded-2xl text-base font-bold cursor-pointer hover:scale-[1.02] transition-transform shadow-md disabled:cursor-not-allowed"
               >
                 <ShoppingBag className="w-5 h-5 mr-2" />
                 {!product.isAvailable 
                   ? "Indisponível" 
                   : hasFlavors && !selectedFlavorId 
-                    ? "Selecione um sabor" 
-                    : "Encomendar Agora"}
+                    ? "Selecione um Sabor"
+                    : selectedFlavor && !selectedFlavor.isAvailable
+                      ? "Sabor Esgotado"
+                      : "Encomendar Agora"
+                }
               </Button>
             </Link>
 

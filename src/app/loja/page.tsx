@@ -1,9 +1,8 @@
 import { prisma } from "@/infrastructure/database/prisma";
-import Image from "next/image";
-import Link from "next/link";
 import { Header } from "@/components/header";
 import { BackButton } from "@/components/ui/back-button";
 import { ShopProductCard } from "./shop-product-card";
+import type { Decimal } from "@prisma/client/runtime/client";
 
 interface ProductForCard {
   id: string;
@@ -12,8 +11,20 @@ interface ProductForCard {
   description: string | null;
   imageUrl: string | null;
   images: string[];
-  variantName: string | null;
   category: string | null;
+  flavorCount: number;
+  minPrice: string | null;
+}
+
+interface DBProduct {
+  id: string;
+  name: string;
+  price: Decimal;
+  description: string | null;
+  imageUrl: string | null;
+  images: string[];
+  category: string | null;
+  flavors: { price: Decimal }[];
 }
 
 interface ShopPageProps {
@@ -36,21 +47,32 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       description: true,
       imageUrl: true,
       images: true,
-      variantName: true,
       category: true,
+      flavors: {
+        where: { isAvailable: true },
+        select: {
+          price: true,
+        },
+      },
     },
   });
 
-  const products: ProductForCard[] = dbProducts.map((p: { id: string; name: string; price: { toString(): string }; description: string | null; imageUrl: string | null; images: string[]; variantName: string | null; category: string | null; }) => ({
-    id: p.id,
-    name: p.name,
-    price: p.price.toString(),
-    description: p.description,
-    imageUrl: p.imageUrl,
-    images: p.images,
-    variantName: p.variantName,
-    category: p.category,
-  }));
+  const products: ProductForCard[] = dbProducts.map((p: DBProduct) => {
+    const flavorPrices = p.flavors.map((f: { price: Decimal }) => parseFloat(f.price.toString()));
+    const minFlavorPrice = flavorPrices.length > 0 ? Math.min(...flavorPrices) : null;
+    
+    return {
+      id: p.id,
+      name: p.name,
+      price: p.price.toString(),
+      description: p.description,
+      imageUrl: p.imageUrl,
+      images: p.images,
+      category: p.category,
+      flavorCount: p.flavors.length,
+      minPrice: minFlavorPrice !== null ? minFlavorPrice.toFixed(2) : null,
+    };
+  });
 
   const categories = Array.from(
     new Set(products.map((p) => p.category).filter(Boolean) as string[])

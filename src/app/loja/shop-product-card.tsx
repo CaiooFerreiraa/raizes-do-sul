@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ShoppingBag, Star, ImageOff } from "lucide-react";
+import { ShoppingBag, Star, ImageOff, Layers2 } from "lucide-react";
 
 interface Product {
   id: string;
@@ -13,8 +13,9 @@ interface Product {
   description: string | null;
   imageUrl: string | null;
   images: string[];
-  variantName: string | null;
   category: string | null;
+  flavorCount: number;
+  minPrice: string | null;
 }
 
 interface ShopProductCardProps {
@@ -30,7 +31,14 @@ export function ShopProductCard({ product }: ShopProductCardProps) {
       ? product.images[0]
       : product.imageUrl ?? null;
 
-  const formattedPrice = parseFloat(product.price).toLocaleString("pt-BR", {
+  const hasFlavors = product.flavorCount > 0;
+  const hasVariedPrices = product.minPrice && product.minPrice !== product.price;
+  
+  // Se tem sabores com preços variados, mostra "A partir de R$ X"
+  const displayPrice = hasVariedPrices ? product.minPrice! : product.price;
+  const pricePrefix = hasVariedPrices ? "A partir de " : "";
+
+  const formattedPrice = parseFloat(displayPrice).toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
   });
 
@@ -61,6 +69,14 @@ export function ShopProductCard({ product }: ShopProductCardProps) {
             {/* Overlay hover */}
             <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-300" />
 
+            {/* Badge de sabores */}
+            {hasFlavors && (
+              <div className="absolute top-2 left-2 bg-primary/90 backdrop-blur-sm text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Layers2 className="w-2.5 h-2.5" />
+                {product.flavorCount} sabor{product.flavorCount > 1 ? "es" : ""}
+              </div>
+            )}
+
             {/* Badge de galeria */}
             {product.images && product.images.length > 1 && (
               <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
@@ -83,13 +99,6 @@ export function ShopProductCard({ product }: ShopProductCardProps) {
               {product.name}
             </h3>
 
-            {/* Variante */}
-            {product.variantName && (
-              <span className="text-[10px] text-muted-foreground bg-secondary/40 px-2 py-0.5 rounded-full w-fit">
-                {product.variantName}
-              </span>
-            )}
-
             {/* Estrelas */}
             <div className="flex items-center gap-0.5">
               {[1, 2, 3, 4, 5].map((s) => (
@@ -103,9 +112,16 @@ export function ShopProductCard({ product }: ShopProductCardProps) {
 
             {/* Preço + CTA */}
             <div className="mt-auto pt-2 flex items-center justify-between gap-1">
-              <p className="text-primary font-bold text-sm md:text-base leading-none">
-                R$ {formattedPrice}
-              </p>
+              <div>
+                {pricePrefix && (
+                  <span className="text-[9px] text-muted-foreground block">
+                    {pricePrefix}
+                  </span>
+                )}
+                <p className="text-primary font-bold text-sm md:text-base leading-none">
+                  R$ {formattedPrice}
+                </p>
+              </div>
               <div className="w-7 h-7 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300 flex-shrink-0">
                 <ShoppingBag className="w-3.5 h-3.5 text-primary group-hover:text-primary-foreground transition-colors" />
               </div>
