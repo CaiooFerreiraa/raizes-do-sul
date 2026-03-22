@@ -8,7 +8,7 @@ interface OrderItemInput {
   productId: string;
   flavorId?: string;
   flavorName?: string;
-  name: string; 
+  name: string;
   quantity: number;
   price: number;
   imageUrl?: string;
@@ -48,7 +48,7 @@ export async function createOrder(data: CreateOrderInput) {
       data.items.map(async (item: OrderItemInput) => {
         let dbProduct: { id: string } | null = null;
         let dbFlavor: { id: string; name: string } | null = null;
-        
+
         if (item.productId && item.productId.length > 5) {
           dbProduct = await prisma.product.findUnique({
             where: { id: item.productId },
@@ -100,7 +100,7 @@ export async function createOrder(data: CreateOrderInput) {
     let paymentUrl: string | undefined = undefined;
 
     if (data.paymentMethod === "CREDIT") {
-       try {
+      try {
         const checkout = await createAbacatePayCheckout({
           externalId: order.id,
           customer: {
@@ -109,21 +109,21 @@ export async function createOrder(data: CreateOrderInput) {
             cellphone: data.customerPhone || "(00) 00000-0000",
           },
           products: data.items.map((item) => ({
-             externalId: item.flavorId ? `v2-${item.productId}-${item.flavorId}` : `v2-${item.productId}`,
-             name: item.name,
-             quantity: item.quantity,
-             price: Math.round(item.price * 100),
-             imageUrl: item.imageUrl,
+            externalId: item.flavorId ? `v2-${item.productId}-${item.flavorId}` : `v2-${item.productId}`,
+            name: item.name,
+            quantity: item.quantity,
+            price: Math.round(item.price * 100),
+            imageUrl: item.imageUrl,
           })),
           returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/acompanhar/${order.id}`,
           completionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/acompanhar/${order.id}?status=paid`,
         });
-        
+
         paymentUrl = checkout.url;
-       } catch (apError) {
-         console.error("Erro ao gerar AbacatePay V2:", apError);
-         // Optionally notify the user but keep the order
-       }
+      } catch (apError) {
+        console.error("Erro ao gerar AbacatePay V2:", apError);
+        // Optionally notify the user but keep the order
+      }
     }
 
     revalidatePath("/admin/pedidos");
@@ -163,9 +163,9 @@ export async function findOrdersByContact(contact: string) {
     // Serialize to plain object for Client Components
     const serializedOrders = JSON.parse(JSON.stringify(orders));
 
-    return { 
-      success: true, 
-      orders: serializedOrders 
+    return {
+      success: true,
+      orders: serializedOrders
     };
   } catch (error) {
     console.error("Erro ao buscar encomendas:", error);

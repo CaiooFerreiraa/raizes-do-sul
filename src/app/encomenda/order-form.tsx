@@ -9,24 +9,24 @@ import { toast } from "sonner";
 import { createOrder } from "@/actions/order";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetTrigger 
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
 } from "@/components/ui/sheet";
 
-import { 
-  Search, 
-  Truck, 
-  CreditCard, 
-  Wallet, 
-  QrCode, 
-  Building2, 
+import {
+  Search,
+  Truck,
+  CreditCard,
+  Wallet,
+  QrCode,
+  Building2,
   MapPin,
-  AlertCircle, 
-  ChevronRight, 
+  AlertCircle,
+  ChevronRight,
   ChevronLeft,
   ShoppingBag,
   CheckCircle2,
@@ -117,7 +117,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
   });
   const [whatsappUrl, setWhatsappUrl] = useState<string>("");
 
-  
+
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -196,7 +196,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
       const { productId, flavorId } = parseCartKey(cartKey);
       const product = initialProducts.find(p => p.id === productId);
       if (!product) return;
-      
+
       if (flavorId) {
         const flavor = product.flavors.find(f => f.id === flavorId);
         if (flavor) {
@@ -219,20 +219,20 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
       price: string;
       displayName: string;
     }> = [];
-    
+
     Object.entries(quantities).forEach(([cartKey, qty]) => {
       if (qty <= 0) return;
       const { productId, flavorId } = parseCartKey(cartKey);
       const product = initialProducts.find(p => p.id === productId);
       if (!product) return;
-      
+
       const flavor = flavorId ? product.flavors.find(f => f.id === flavorId) || null : null;
       const price = flavor ? flavor.price : product.price;
       const displayName = flavor ? `${product.name} - ${flavor.name}` : product.name;
-      
+
       items.push({ cartKey, product, flavor, quantity: qty, price, displayName });
     });
-    
+
     return items;
   };
 
@@ -294,7 +294,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
       const paymentUrl = (res as any).paymentUrl as string | undefined;
       setCreatedOrderId(orderId);
       setIsOnlinePayment(!!paymentUrl);
-      
+
       // WhatsApp Resume
       const friendlyPayment = {
         'PIX': 'Pix',
@@ -303,7 +303,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
         'CASH': 'Dinheiro'
       }[paymentMethod] || paymentMethod;
 
-      const friendlyDelivery = deliveryType === 'PICKUP' 
+      const friendlyDelivery = deliveryType === 'PICKUP'
         ? `Vou retirar na ${pickupPoint === 'LOJA' ? 'loja' : 'feira'}`
         : `Entrega em: ${orderDetails.street}, ${orderDetails.number} (${orderDetails.neighborhood})`;
 
@@ -336,11 +336,11 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
         "",
         orderDetails.notes ? `*Observação:* ${orderDetails.notes}` : null,
         orderDetails.notes ? "" : null,
-        paymentUrl 
+        paymentUrl
           ? "O pagamento já foi realizado via cartão. Fico no aguardo da confirmação de vocês!"
           : "Fico no aguardo da confirmação de vocês para enviar o sinal de 50%. Obrigado!"
       ].filter(item => item !== null).join("\n");
-      
+
       const rawNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
       const cleanedNumber = rawNumber.replace(/\D/g, "");
       const url = `https://wa.me/${cleanedNumber}?text=${encodeURIComponent(message)}`;
@@ -350,7 +350,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
       setQuantities({});
       localStorage.removeItem('cart_quantities');
       window.scrollTo({ top: 0, behavior: "smooth" });
-      
+
       // Auto redirect after delay
       setTimeout(() => {
         if (paymentUrl) {
@@ -366,13 +366,13 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
   if (step === "success") {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-center justify-center min-h-[85vh] text-center space-y-12 w-full max-w-2xl mx-auto px-6"
       >
         <div className="relative">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0, rotate: -45 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", damping: 15, stiffness: 150, delay: 0.2 }}
@@ -380,10 +380,10 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
           >
             <CheckCircle2 size={56} strokeWidth={1.5} />
           </motion.div>
-          
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.4, 1], 
+
+          <motion.div
+            animate={{
+              scale: [1, 1.4, 1],
               opacity: [0.2, 0.05, 0.2],
               rotate: [0, 90, 180, 270, 360]
             }}
@@ -397,7 +397,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
             <h2 className="text-4xl md:text-5xl font-display font-bold text-primary tracking-tight">Recebemos seu pedido!</h2>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.3em]">Obrigado pela preferência</p>
           </div>
-          
+
           <p className="text-sm md:text-md text-muted-foreground max-w-md mx-auto leading-relaxed font-medium">
             Sua encomenda está em nossa fila de produção. Em instantes, nossa equipe entrará em contato via <b>WhatsApp</b> para confirmar os detalhes. {isOnlinePayment ? "Como o pagamento já foi realizado via cartão, basta aguardar a confirmação!" : "Ficamos no aguardo do envio do comprovante do sinal de 50%."}
           </p>
@@ -416,13 +416,13 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
         </div>
 
         <div className="pt-4 flex flex-col sm:flex-row gap-4 w-full justify-center">
-          <Button 
-            onClick={() => router.push(`/acompanhar/${createdOrderId}`)} 
+          <Button
+            onClick={() => router.push(`/acompanhar/${createdOrderId}`)}
             className="rounded-full px-12 h-14 text-[10px] font-bold uppercase tracking-widest bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all cursor-pointer"
           >
             Acompanhar Pedido
           </Button>
-          <Button 
+          <Button
             onClick={() => {
               if (whatsappUrl) {
                 window.open(whatsappUrl, '_blank');
@@ -431,7 +431,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                 const cleanedNumber = rawNumber.replace(/\D/g, "");
                 window.open(`https://wa.me/${cleanedNumber}`, '_blank');
               }
-            }} 
+            }}
             variant="outline"
             className="rounded-full px-10 h-14 text-[10px] font-bold uppercase tracking-widest border-border/40 text-muted-foreground hover:bg-card/40 transition-all cursor-pointer"
           >
@@ -439,8 +439,8 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
           </Button>
         </div>
         <div className="pt-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.push("/")}
             className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors cursor-pointer"
           >
@@ -457,9 +457,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
       <header className="sticky top-0 z-40 bg-background/60 backdrop-blur-xl border-b border-border/10 py-3 px-4 md:px-10 w-full">
         <div className="w-full flex items-center justify-between gap-2 max-w-[1600px] mx-auto">
           <div className="flex items-center gap-2 md:gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handlePrevStep}
               className="h-9 w-9 md:h-10 md:w-10 rounded-full border border-border/10 hover:bg-primary/5 hover:text-primary transition-all group cursor-pointer"
             >
@@ -476,7 +476,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 md:gap-4">
             {step === "selection" && totalItems > 0 && (
               <div className="flex items-center gap-2 md:gap-3">
@@ -494,56 +494,56 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                       </Button>
                     } />
                     <SheetContent side="right" className="w-[85vw] sm:w-[400px] border-l-border/10 p-0 overflow-y-auto">
-                        <div className="p-8 space-y-8">
-                          <SheetHeader className="text-left space-y-1">
-                            <SheetTitle className="text-2xl font-display font-bold text-primary">Sua Sacola</SheetTitle>
-                            <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-[0.1em]">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
-                          </SheetHeader>
-                          
-                          <div className="space-y-4">
-                            {selectedItems.length === 0 ? (
-                              <div className="py-20 text-center space-y-4">
-                                <ShoppingBag size={40} className="mx-auto text-muted-foreground/10" />
-                                <p className="text-xs font-medium text-muted-foreground/60 italic">Sua sacola está vazia</p>
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                {selectedItems.map((item) => (
-                                  <div key={item.cartKey} className="flex justify-between items-center group bg-primary/[0.02] p-4 rounded-2xl border border-primary/5">
-                                    <div className="flex-1">
-                                      <p className="font-bold text-xs text-primary/80">{item.displayName}</p>
-                                      <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-wider">R$ {parseFloat(item.price).toFixed(2)}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="flex items-center bg-background rounded-full border border-border/40 p-1">
-                                        <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(item.cartKey, -1)}><Minus size={12} /></button>
-                                        <span className="text-xs font-bold w-6 text-center">{item.quantity}</span>
-                                        <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(item.cartKey, 1)}><Plus size={12} /></button>
-                                      </div>
+                      <div className="p-8 space-y-8">
+                        <SheetHeader className="text-left space-y-1">
+                          <SheetTitle className="text-2xl font-display font-bold text-primary">Sua Sacola</SheetTitle>
+                          <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-[0.1em]">{totalItems} {totalItems === 1 ? 'item' : 'itens'}</p>
+                        </SheetHeader>
+
+                        <div className="space-y-4">
+                          {selectedItems.length === 0 ? (
+                            <div className="py-20 text-center space-y-4">
+                              <ShoppingBag size={40} className="mx-auto text-muted-foreground/10" />
+                              <p className="text-xs font-medium text-muted-foreground/60 italic">Sua sacola está vazia</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {selectedItems.map((item) => (
+                                <div key={item.cartKey} className="flex justify-between items-center group bg-primary/[0.02] p-4 rounded-2xl border border-primary/5">
+                                  <div className="flex-1">
+                                    <p className="font-bold text-xs text-primary/80">{item.displayName}</p>
+                                    <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-wider">R$ {parseFloat(item.price).toFixed(2)}</p>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex items-center bg-background rounded-full border border-border/40 p-1">
+                                      <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(item.cartKey, -1)}><Minus size={12} /></button>
+                                      <span className="text-xs font-bold w-6 text-center">{item.quantity}</span>
+                                      <button className="h-7 w-7 rounded-full flex items-center justify-center text-primary" onClick={() => handleQuantity(item.cartKey, 1)}><Plus size={12} /></button>
                                     </div>
                                   </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
- 
-                          <div className="pt-8 border-t border-border/10 space-y-6">
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground font-bold text-[11px] uppercase tracking-[0.2em]">Total</span>
-                              <span className="text-3xl font-display font-bold text-primary tracking-tight">R$ {getSubtotal().toFixed(2).replace(".", ",")}</span>
+                                </div>
+                              ))}
                             </div>
-                            <Button 
-                              onClick={handleNextStep}
-                              className="w-full h-14 rounded-2xl text-xs font-bold uppercase tracking-widest bg-primary text-white shadow-xl shadow-primary/20"
-                            >
-                              Finalizar Pedido
-                            </Button>
-                          </div>
+                          )}
                         </div>
+
+                        <div className="pt-8 border-t border-border/10 space-y-6">
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground font-bold text-[11px] uppercase tracking-[0.2em]">Total</span>
+                            <span className="text-3xl font-display font-bold text-primary tracking-tight">R$ {getSubtotal().toFixed(2).replace(".", ",")}</span>
+                          </div>
+                          <Button
+                            onClick={handleNextStep}
+                            className="w-full h-14 rounded-2xl text-xs font-bold uppercase tracking-widest bg-primary text-white shadow-xl shadow-primary/20"
+                          >
+                            Finalizar Pedido
+                          </Button>
+                        </div>
+                      </div>
                     </SheetContent>
                   </Sheet>
                 </div>
-                <Button 
+                <Button
                   onClick={handleNextStep}
                   className="rounded-full h-9 md:h-11 px-4 md:px-6 font-bold text-[10px] md:text-xs shadow-md group hover:scale-[1.01] active:scale-95 transition-all cursor-pointer bg-primary text-white"
                 >
@@ -600,21 +600,21 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="flex items-center bg-background/50 rounded-full border border-border/40 p-0.5">
-                                  <button 
-                                    className="h-6 w-6 rounded-full flex items-center justify-center text-primary hover:bg-primary/5 cursor-pointer transition-colors" 
+                                  <button
+                                    className="h-6 w-6 rounded-full flex items-center justify-center text-primary hover:bg-primary/5 cursor-pointer transition-colors"
                                     onClick={() => handleQuantity(item.cartKey, -1)}
                                   >
                                     <Minus size={10} />
                                   </button>
                                   <span className="text-[10px] font-bold w-5 text-center">{item.quantity}</span>
-                                  <button 
-                                    className="h-6 w-6 rounded-full flex items-center justify-center text-primary hover:bg-primary/5 cursor-pointer transition-colors" 
+                                  <button
+                                    className="h-6 w-6 rounded-full flex items-center justify-center text-primary hover:bg-primary/5 cursor-pointer transition-colors"
                                     onClick={() => handleQuantity(item.cartKey, 1)}
                                   >
                                     <Plus size={10} />
                                   </button>
                                 </div>
-                                <button 
+                                <button
                                   className="h-7 w-7 text-muted-foreground/20 hover:text-destructive hover:bg-destructive/5 rounded-full transition-colors cursor-pointer flex items-center justify-center"
                                   onClick={() => handleQuantity(item.cartKey, -item.quantity)}
                                 >
@@ -632,7 +632,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                           <span className="text-2xl font-display font-medium text-primary tracking-tight">R$ {getSubtotal().toFixed(2).replace(".", ",")}</span>
                         </div>
 
-                        <Button 
+                        <Button
                           onClick={handleNextStep}
                           disabled={totalItems === 0}
                           className="w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer group bg-primary text-white border-b-2 border-primary-dark/20"
@@ -664,7 +664,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
                     </div>
-                    
+
                     <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/20 px-4 py-2 rounded-full border border-border/20">
                       {filteredProducts.length} itens encontrados
                     </div>
@@ -674,9 +674,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                     {filteredProducts.map((p) => {
                       const q = quantities[p.id] || 0;
                       return (
-                        <motion.div 
-                          layout 
-                          key={p.id} 
+                        <motion.div
+                          layout
+                          key={p.id}
                           className={`group bg-white dark:bg-card/40 rounded-2xl border border-border/40 transition-all duration-300 overflow-hidden flex flex-col h-full hover:shadow-lg hover:shadow-primary/5 ${q > 0 ? 'border-primary' : 'hover:border-primary/40'}`}
                         >
                           <div className="aspect-[16/10] relative overflow-hidden m-3 rounded-xl border border-border/15">
@@ -687,46 +687,46 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                                 <Package size={24} className="text-primary/10" />
                               </div>
                             )}
-                            
+
                             {q > 0 && (
-                              <motion.div 
-                                initial={{ scale: 0.5, opacity: 0 }} 
-                                animate={{ scale: 1, opacity: 1 }} 
+                              <motion.div
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
                                 className="absolute top-3 right-3 bg-primary text-white h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs shadow-lg"
                               >
                                 {q}
                               </motion.div>
                             )}
                           </div>
-                          
+
                           <div className="px-5 pb-5 flex flex-col flex-1 space-y-4">
                             <div>
                               <h4 className="font-display font-medium text-base group-hover:text-primary transition-colors duration-300">{p.name}</h4>
                               <p className="text-[11px] text-muted-foreground/90 font-medium line-clamp-2 mt-1 leading-relaxed">{p.description || "Receita artesanal feita com ingredientes selecionados."}</p>
                             </div>
-                            
+
                             <div className="pt-2 flex items-center justify-between mt-auto">
                               <span className="font-display font-medium text-lg text-primary">R$ {parseFloat(p.price).toFixed(2).replace(".", ",")}</span>
-                              
+
                               <div className="flex items-center gap-1">
                                 {q > 0 ? (
                                   <div className="flex items-center bg-muted/40 rounded-full p-1 border border-border/20">
-                                    <button 
-                                      className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-background transition-colors cursor-pointer text-muted-foreground hover:text-primary" 
+                                    <button
+                                      className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-background transition-colors cursor-pointer text-muted-foreground hover:text-primary"
                                       onClick={() => handleQuantity(p.id, -1)}
                                     >
                                       <Minus size={12} />
                                     </button>
                                     <span className="text-xs font-semibold w-6 text-center">{q}</span>
-                                    <button 
-                                      className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-background transition-colors cursor-pointer text-muted-foreground hover:text-primary" 
+                                    <button
+                                      className="h-7 w-7 rounded-full flex items-center justify-center hover:bg-background transition-colors cursor-pointer text-muted-foreground hover:text-primary"
                                       onClick={() => handleQuantity(p.id, 1)}
                                     >
                                       <Plus size={12} />
                                     </button>
                                   </div>
                                 ) : (
-                                  <Button 
+                                  <Button
                                     variant="outline"
                                     onClick={() => handleQuantity(p.id, 1)}
                                     className="rounded-full h-8 px-4 text-[11px] font-medium border-primary/20 text-primary hover:bg-primary hover:text-white transition-all cursor-pointer"
@@ -773,9 +773,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                           <span className={`text-[10px] font-bold uppercase tracking-widest ${deliveryType === "DELIVERY" ? 'text-primary' : 'text-muted-foreground/60'}`}>Delivery</span>
                         </Label>
                       </RadioGroup>
-                      
+
                       {deliveryType === "DELIVERY" && (
-                        <motion.div 
+                        <motion.div
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           className="bg-primary/5 p-4 rounded-xl border border-primary/10 mt-2"
@@ -789,7 +789,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
                       <AnimatePresence mode="wait">
                         {deliveryType === "PICKUP" && (
-                          <motion.div 
+                          <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
@@ -823,9 +823,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                           { id: "CASH", label: "Dinheiro", icon: Wallet, disabled: deliveryType === "DELIVERY" },
                           { id: "CREDIT", label: "Cartão de Crédito", icon: CreditCard },
                         ].filter(m => !m.disabled).map((m) => (
-                          <Label 
-                            key={m.id} 
-                            htmlFor={m.id} 
+                          <Label
+                            key={m.id}
+                            htmlFor={m.id}
                             className={`flex flex-col items-center justify-center aspect-square rounded-2xl border p-4 cursor-pointer transition-all ${paymentMethod === m.id ? 'border-primary bg-primary/[0.03] text-primary shadow-sm' : 'border-border/60 bg-card/10 text-muted-foreground/60 hover:border-primary/40'}`}
                           >
                             <RadioGroupItem value={m.id} id={m.id} className="sr-only" />
@@ -840,7 +840,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
                   <AnimatePresence>
                     {deliveryType === "DELIVERY" && (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
@@ -925,9 +925,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                               </div>
                             </div>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             type="button"
                             onClick={() => router.push('/perfil')}
                             className="text-[9px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary/5 h-8 px-3 rounded-full"
@@ -962,9 +962,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
-                    <Button 
-                      type="submit" 
-                      disabled={loading} 
+                    <Button
+                      type="submit"
+                      disabled={loading}
                       className="w-full sm:w-auto h-12 px-12 rounded-full text-xs font-bold transition-all group cursor-pointer bg-primary text-white shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] active:scale-95 border-b-2 border-primary-dark/20"
                     >
                       {loading ? "Processando..." : (
@@ -985,7 +985,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                 <div className="bg-card/20 backdrop-blur-md border border-border/60 rounded-[2.5rem] p-10 space-y-8 w-full shadow-xl flex flex-col items-center text-center relative overflow-hidden">
                   <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
                   <h3 className="text-[11px] font-bold text-muted-foreground/40 uppercase tracking-[0.4em] ml-1">Resumo</h3>
-                  
+
                   <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
                     {selectedItems.map((item) => (
                       <div key={item.cartKey} className="flex flex-col items-center gap-1.5 peer group">
@@ -1053,18 +1053,18 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 export default function OrderForm({ initialProducts }: { initialProducts: ProductDTO[] }) {
   return (
     <Suspense fallback={<div className="flex flex-col items-center justify-center min-h-screen space-y-8 bg-background">
-      <motion.div 
-        animate={{ 
+      <motion.div
+        animate={{
           rotate: 360,
           scale: [1, 1.1, 1],
           borderRadius: ["30%", "50%", "30%"]
-        }} 
-        transition={{ 
+        }}
+        transition={{
           rotate: { repeat: Infinity, duration: 2, ease: "linear" },
           scale: { repeat: Infinity, duration: 1.5 },
           borderRadius: { repeat: Infinity, duration: 2 }
-        }} 
-        className="h-24 w-24 rounded-full border-8 border-primary/10 border-t-primary shadow-2xl shadow-primary/20" 
+        }}
+        className="h-24 w-24 rounded-full border-8 border-primary/10 border-t-primary shadow-2xl shadow-primary/20"
       />
       <div className="text-center space-y-2">
         <p className="text-primary font-display text-4xl font-bold italic tracking-tight animate-pulse">Raízes do Sul</p>
