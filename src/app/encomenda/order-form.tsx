@@ -821,14 +821,20 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                         {[
                           { id: "PIX", label: "Pix", icon: QrCode },
                           { id: "CASH", label: "Dinheiro", icon: Wallet, disabled: deliveryType === "DELIVERY" },
-                          { id: "CREDIT", label: "Cartão de Crédito", icon: CreditCard },
-                        ].filter(m => !m.disabled).map((m) => (
+                          { id: "CREDIT", label: "Cartão de Crédito", icon: CreditCard, disabled: true },
+                        ].map((m) => (
                           <Label
                             key={m.id}
                             htmlFor={m.id}
-                            className={`flex flex-col items-center justify-center aspect-square rounded-2xl border p-4 cursor-pointer transition-all ${paymentMethod === m.id ? 'border-primary bg-primary/[0.03] text-primary shadow-sm' : 'border-border/60 bg-card/10 text-muted-foreground/60 hover:border-primary/40'}`}
+                            className={`flex flex-col items-center justify-center aspect-square rounded-2xl border p-4 transition-all 
+                              ${m.disabled 
+                                ? 'border-border/20 bg-muted/5 text-muted-foreground/30 cursor-not-allowed opacity-50' 
+                                : paymentMethod === m.id 
+                                  ? 'border-primary bg-primary/[0.03] text-primary shadow-sm cursor-pointer' 
+                                  : 'border-border/60 bg-card/10 text-muted-foreground/60 hover:border-primary/40 cursor-pointer'
+                              }`}
                           >
-                            <RadioGroupItem value={m.id} id={m.id} className="sr-only" />
+                            <RadioGroupItem value={m.id} id={m.id} className="sr-only" disabled={m.disabled} />
                             <m.icon size={20} className="mb-2" />
                             <span className="text-[11px] font-bold uppercase tracking-widest">{m.label}</span>
                           </Label>

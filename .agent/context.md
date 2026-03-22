@@ -214,3 +214,4 @@ WCAG AA, foco visível sempre, cores contrastantes, labels semânticos.
 - [2026-03-21] Bug Fix — Corrigido erro de consulta no Dashboard Admin (`in: [..., null]`) que causava travamento no Prisma 7.5.0.
 - [2026-03-21] Database — Corrigida a falta da propriedade `url = env("DATABASE_URL")` no `prisma/schema.prisma`, garantindo conexão correta com o Neon.
 - [2026-03-21] Enhancement — Atualizado o sistema de status de pagamento para suportar a string `"PAID"` retornada pelos webhooks da AbacatePay. Implementada persistência do carrinho (itens escolhidos) via `localStorage` no formulário de encomenda, garantindo que os itens sejam preservados entre recargas e limpos automaticamente após a criação do pedido ou confirmação de pagamento. Adicionado feedback visual de sucesso (toast) ao retornar de um checkout aprovado.
+- [2026-03-22] Interface — Desativada a opção de Cartão de Crédito no formulário de encomenda a pedido do usuário.
