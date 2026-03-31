@@ -24,8 +24,14 @@ export default function ProfilePage() {
     try {
       const res = await updateProfileAction(formData);
       if (res.success) {
-        // Update session client-side
-        await update();
+        // Update session client-side with new user data
+        await update({ 
+          user: { 
+            ...session?.user,
+            ...res.user
+          } 
+        });
+        router.refresh(); // Sync server components
         toast.success("Perfil atualizado com sucesso!");
       } else {
         toast.error(res.error || "Erro ao atualizar perfil");

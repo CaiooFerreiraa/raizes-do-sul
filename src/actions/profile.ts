@@ -18,7 +18,7 @@ export async function updateProfileAction(formData: FormData) {
   const reference = formData.get("reference") as string;
 
   try {
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
       data: {
         name,
@@ -28,10 +28,18 @@ export async function updateProfileAction(formData: FormData) {
         neighborhood,
         reference,
       },
+      select: {
+        name: true,
+        phone: true,
+        street: true,
+        number: true,
+        neighborhood: true,
+        reference: true,
+      }
     });
 
     revalidatePath("/perfil");
-    return { success: true };
+    return { success: true, user: updatedUser };
   } catch (error) {
     console.error(error);
     return { error: "Falha ao atualizar perfil" };
