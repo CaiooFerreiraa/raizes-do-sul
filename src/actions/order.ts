@@ -122,7 +122,14 @@ export async function createOrder(data: CreateOrderInput) {
         paymentUrl = checkout.url;
       } catch (apError) {
         console.error("Erro ao gerar AbacatePay V2:", apError);
-        // Optionally notify the user but keep the order
+        await prisma.order.delete({ where: { id: order.id } }).catch((cleanupError: unknown) => {
+          console.error("Erro ao remover pedido sem checkout:", cleanupError);
+        });
+
+        return {
+          success: false,
+          error: "Não foi possível abrir o pagamento com cartão. Tente novamente ou escolha PIX.",
+        };
       }
     }
 

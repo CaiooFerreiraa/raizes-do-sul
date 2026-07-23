@@ -1,20 +1,38 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import type { Session } from "next-auth";
+import { useSession, type UpdateSession } from "next-auth/react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, Phone, MapPin, Save, Loader2, ChevronLeft } from "lucide-react";
+import { User, MapPin, Save, Loader2, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { updateProfileAction } from "@/actions/profile";
 
-export default function ProfilePage() {
-  const { data: session, update } = useSession();
+interface ProfileFormProps {
+  session: Session;
+  update: UpdateSession;
+}
+
+function ProfileForm({ session, update }: ProfileFormProps) {
   const [loading, setLoading] = useState(false);
+  const [values, setValues] = useState(() => ({
+    name: session.user.name || "",
+    phone: session.user.phone || "",
+    street: session.user.street || "",
+    number: session.user.number || "",
+    neighborhood: session.user.neighborhood || "",
+    reference: session.user.reference || "",
+  }));
   const router = useRouter();
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setValues((current) => ({ ...current, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,12 +54,81 @@ export default function ProfilePage() {
       } else {
         toast.error(res.error || "Erro ao atualizar perfil");
       }
-    } catch (err) {
+    } catch {
       toast.error("Erro de conexão");
     } finally {
       setLoading(false);
     }
   };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="space-y-6">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+          <User size={14} /> Dados Pessoais
+        </h3>
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="name" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Nome Completo</Label>
+            <Input id="name" name="name" value={values.name} onChange={handleInputChange} className="h-12 rounded-xl bg-card border-border/40" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="phone" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">WhatsApp</Label>
+            <Input id="phone" name="phone" value={values.phone} onChange={handleInputChange} placeholder="(00) 00000-0000" className="h-12 rounded-xl bg-card border-border/40" />
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+          <MapPin size={14} /> Endereço de Entrega
+        </h3>
+
+        <div className="grid gap-4">
+          <div className="grid grid-cols-4 gap-3">
+            <div className="col-span-3 space-y-1.5">
+              <Label htmlFor="street" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Rua</Label>
+              <Input id="street" name="street" value={values.street} onChange={handleInputChange} className="h-12 rounded-xl bg-card border-border/40" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="number" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Nº</Label>
+              <Input id="number" name="number" value={values.number} onChange={handleInputChange} className="h-12 rounded-xl bg-card border-border/40" />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="neighborhood" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Bairro</Label>
+              <Input id="neighborhood" name="neighborhood" value={values.neighborhood} onChange={handleInputChange} className="h-12 rounded-xl bg-card border-border/40" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="reference" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Referência</Label>
+              <Input id="reference" name="reference" value={values.reference} onChange={handleInputChange} placeholder="Perto de..." className="h-12 rounded-xl bg-card border-border/40" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Button
+        type="submit"
+        disabled={loading}
+        className="w-full h-14 rounded-2xl bg-primary text-white font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer"
+      >
+        {loading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : (
+          <span className="flex items-center gap-2">
+            <Save size={18} /> Salvar Alterações
+          </span>
+        )}
+      </Button>
+    </form>
+  );
+}
+
+export default function ProfilePage() {
+  const { data: session, update } = useSession();
+  const router = useRouter();
 
   if (!session) {
     return (
@@ -85,67 +172,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="space-y-6">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <User size={14} /> Dados Pessoais
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="name" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Nome Completo</Label>
-                  <Input id="name" name="name" defaultValue={session.user?.name || ""} className="h-12 rounded-xl bg-card border-border/40" />
-                </div>
-                
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">WhatsApp</Label>
-                  <Input id="phone" name="phone" defaultValue={session.user?.phone || ""} placeholder="(00) 00000-0000" className="h-12 rounded-xl bg-card border-border/40" />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <MapPin size={14} /> Endereço de Entrega
-              </h3>
-              
-              <div className="grid gap-4">
-                <div className="grid grid-cols-4 gap-3">
-                  <div className="col-span-3 space-y-1.5">
-                    <Label htmlFor="street" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Rua</Label>
-                    <Input id="street" name="street" defaultValue={session.user?.street || ""} className="h-12 rounded-xl bg-card border-border/40" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="number" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Nº</Label>
-                    <Input id="number" name="number" defaultValue={session.user?.number || ""} className="h-12 rounded-xl bg-card border-border/40" />
-                  </div>
-                </div>
-
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="neighborhood" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Bairro</Label>
-                    <Input id="neighborhood" name="neighborhood" defaultValue={session.user?.neighborhood || ""} className="h-12 rounded-xl bg-card border-border/40" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="reference" className="text-[10px] uppercase font-bold tracking-wider ml-1 text-muted-foreground">Referência</Label>
-                    <Input id="reference" name="reference" defaultValue={session.user?.reference || ""} placeholder="Perto de..." className="h-12 rounded-xl bg-card border-border/40" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <Button 
-              type="submit" 
-              disabled={loading}
-              className="w-full h-14 rounded-2xl bg-primary text-white font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer"
-            >
-              {loading ? <Loader2 className="animate-spin h-5 w-5 mx-auto" /> : (
-                <span className="flex items-center gap-2">
-                  <Save size={18} /> Salvar Alterações
-                </span>
-              )}
-            </Button>
-          </form>
+          <ProfileForm session={session} update={update} />
         </motion.div>
       </main>
     </div>

@@ -1,6 +1,5 @@
 "use client"
 
-import { loginAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,28 +7,46 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { update } = useSession();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     const formData = new FormData(e.currentTarget);
+
     try {
-      const res = await loginAction(formData);
-      if (res?.error) {
-        setError(res.error);
-        setLoading(false);
-      } else {
-        // Redireciona via window.location para garantir limpeza total do cache da sessão
-        window.location.href = "/";
+      const result = await signIn("credentials", {
+        email: formData.get("email"),
+        password: formData.get("password"),
+        redirect: false,
+        redirectTo: "/",
+      });
+
+      if (!result.ok || result.error) {
+        setError("Credenciais inválidas.");
+        return;
       }
-    } catch (e) {
-      console.error(e);
+
+      const session = await update();
+
+      if (!session) {
+        window.location.replace("/");
+        return;
+      }
+
+      router.replace("/");
+      router.refresh();
+    } catch (loginError) {
+      console.error("Erro ao iniciar sessão:", loginError);
+      setError("Não foi possível iniciar a sessão. Tente novamente.");
+    } finally {
       setLoading(false);
     }
   };

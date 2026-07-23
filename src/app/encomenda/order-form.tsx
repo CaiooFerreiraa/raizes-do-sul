@@ -291,9 +291,16 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
     if (res.success) {
       const orderId = res.orderId as string;
-      const paymentUrl = (res as any).paymentUrl as string | undefined;
+      const paymentUrl = res.paymentUrl;
       setCreatedOrderId(orderId);
       setIsOnlinePayment(!!paymentUrl);
+
+      if (paymentUrl) {
+        setQuantities({});
+        localStorage.removeItem("cart_quantities");
+        window.location.assign(paymentUrl);
+        return;
+      }
 
       // WhatsApp Resume
       const friendlyPayment = {
@@ -353,11 +360,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
 
       // Auto redirect after delay
       setTimeout(() => {
-        if (paymentUrl) {
-          window.location.href = paymentUrl; // Redirect to AbacatePay
-        } else {
-          window.open(url, '_blank'); // Open WhatsApp
-        }
+        window.open(url, '_blank'); // Open WhatsApp
       }, 2000);
     } else {
       toast.error(res.error || "Ocorreu um erro ao enviar.");
@@ -399,18 +402,22 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
           </div>
 
           <p className="text-sm md:text-md text-muted-foreground max-w-md mx-auto leading-relaxed font-medium">
-            Sua encomenda está em nossa fila de produção. Em instantes, nossa equipe entrará em contato via <b>WhatsApp</b> para confirmar os detalhes. {isOnlinePayment ? "Como o pagamento já foi realizado via cartão, basta aguardar a confirmação!" : "Ficamos no aguardo do envio do comprovante do sinal de 50%."}
+            {isOnlinePayment
+              ? <>Seu pedido foi criado e você será redirecionado para o checkout seguro da <b>AbacatePay</b> para concluir o pagamento com cartão.</>
+              : <>Sua encomenda está em nossa fila de produção. Em instantes, nossa equipe entrará em contato via <b>WhatsApp</b> para confirmar os detalhes e receber o comprovante do sinal de 50%.</>}
           </p>
         </div>
 
         <div className="bg-primary/5 border border-primary/10 p-8 rounded-[2.5rem] w-full space-y-4">
           <div className="flex items-center justify-center gap-3">
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-              <QrCode size={20} />
+              {isOnlinePayment ? <CreditCard size={20} /> : <QrCode size={20} />}
             </div>
             <div className="text-left">
               <p className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Próximo Passo</p>
-              <p className="text-xs font-bold">Fique atento ao seu WhatsApp</p>
+              <p className="text-xs font-bold">
+                {isOnlinePayment ? "Conclua o pagamento no checkout" : "Fique atento ao seu WhatsApp"}
+              </p>
             </div>
           </div>
         </div>
@@ -821,7 +828,7 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                         {[
                           { id: "PIX", label: "Pix", icon: QrCode },
                           { id: "CASH", label: "Dinheiro", icon: Wallet, disabled: deliveryType === "DELIVERY" },
-                          { id: "CREDIT", label: "Cartão de Crédito", icon: CreditCard, disabled: true },
+                          { id: "CREDIT", label: "Cartão de Crédito", icon: CreditCard },
                         ].map((m) => (
                           <Label
                             key={m.id}
@@ -840,7 +847,9 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                           </Label>
                         ))}
                       </RadioGroup>
-                      <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-widest px-1 italic">Finalização via WhatsApp</p>
+                      <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-widest px-1 italic">
+                        {paymentMethod === "CREDIT" ? "Pagamento online via AbacatePay" : "Finalização via WhatsApp"}
+                      </p>
                     </div>
                   </div>
 
@@ -906,7 +915,11 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                     </div>
                     <div className="space-y-2">
                       <h4 className="text-xs font-bold text-amber-900/80 uppercase tracking-wider">Atenção: Finalização do Pedido</h4>
-                      <p className="text-xs text-amber-900/80 leading-relaxed font-bold">A produção inicia apenas após a confirmação do pagamento de <span className="text-amber-700 underline decoration-2 underline-offset-4">50% do valor (Sinal) via PIX</span> no WhatsApp.</p>
+                      <p className="text-xs text-amber-900/80 leading-relaxed font-bold">
+                        {paymentMethod === "CREDIT"
+                          ? <>A produção inicia após a confirmação do <span className="text-amber-700 underline decoration-2 underline-offset-4">pagamento online via cartão</span> pela AbacatePay.</>
+                          : <>A produção inicia apenas após a confirmação do pagamento de <span className="text-amber-700 underline decoration-2 underline-offset-4">50% do valor (Sinal) via PIX</span> no WhatsApp.</>}
+                      </p>
                     </div>
                   </div>
 
@@ -1015,9 +1028,13 @@ function OrderFormContent({ initialProducts }: { initialProducts: ProductDTO[] }
                   <div className="p-7 bg-primary/[0.03] rounded-[2.5rem] border border-primary/10 space-y-3 w-full flex flex-col items-center shadow-inner">
                     <div className="flex items-center gap-2 opacity-50">
                       <AlertCircle size={12} className="text-primary" />
-                      <span className="text-[9px] font-bold uppercase tracking-widest">Sinal via PIX (50%)</span>
+                      <span className="text-[9px] font-bold uppercase tracking-widest">
+                        {paymentMethod === "CREDIT" ? "Pagamento online via cartão" : "Sinal via PIX (50%)"}
+                      </span>
                     </div>
-                    <p className="text-3xl font-display font-bold tracking-tight text-primary">R$ {(getSubtotal() / 2).toFixed(2).replace(".", ",")}</p>
+                    <p className="text-3xl font-display font-bold tracking-tight text-primary">
+                      R$ {(paymentMethod === "CREDIT" ? getSubtotal() : getSubtotal() / 2).toFixed(2).replace(".", ",")}
+                    </p>
                   </div>
                 </div>
               </aside>
